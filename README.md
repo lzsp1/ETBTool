@@ -76,6 +76,9 @@ ETBTool/
 ├── App.xaml/.cs # 应用入口
 └── ETBTool.csproj # 项目文件
 
+text
+
+---
 
 ## 环境要求
 
