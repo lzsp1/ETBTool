@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Nullable>enable</Nullable>
+		<ApplicationIcon>etb.ico</ApplicationIcon>
+		<AssemblyName>ETBTool</AssemblyName>
+		<RootNamespace>ETBTool</RootNamespace>
+		<Version>0.0.02</Version>
+		<AssemblyVersion>0.0.02</AssemblyVersion>
+		<FileVersion>0.0.02</FileVersion>
+		<Authors>云杰</Authors>
+		<Company>逃离后室玩友群</Company>
+		<Description>逃离后室游戏工具</Description>
+		<Product>ETBTool</Product>
+		<Copyright>Copyright © 逃离后室玩友群</Copyright>
+	</PropertyGroup>
+</Project>

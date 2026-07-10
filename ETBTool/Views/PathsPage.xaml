@@ -1,0 +1,83 @@
+<Page x:Class="ETBTool.Views.PathsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="Transparent">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitle}" Text="  查看路径"/>
+            <TextBlock Style="{StaticResource MutedText}" Text="查看所有关键路径，支持单个复制和打开文件夹" Margin="0,-4,0,20"/>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="存档路径"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="Path1" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="复制" Style="{StaticResource BaseButton}"
+                                Tag="save" Click="Copy_Click" Margin="0,0,4,0"/>
+                        <Button Grid.Column="2" Content="打开" Style="{StaticResource BaseButton}"
+                                Tag="save" Click="Open_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="崩溃日志路径"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="Path2" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="复制" Style="{StaticResource BaseButton}"
+                                Tag="crash" Click="Copy_Click" Margin="0,0,4,0"/>
+                        <Button Grid.Column="2" Content="打开" Style="{StaticResource BaseButton}"
+                                Tag="crash" Click="Open_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="UE4 安装路径"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="Path3" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="复制" Style="{StaticResource BaseButton}"
+                                Tag="ue4" Click="Copy_Click" Margin="0,0,4,0"/>
+                        <Button Grid.Column="2" Content="打开" Style="{StaticResource BaseButton}"
+                                Tag="ue4" Click="Open_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="Mod 安装路径"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="Path4" IsReadOnly="True" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="复制" Style="{StaticResource BaseButton}"
+                                Tag="mod" Click="Copy_Click" Margin="0,0,4,0"/>
+                        <Button Grid.Column="2" Content="打开" Style="{StaticResource BaseButton}"
+                                Tag="mod" Click="Open_Click"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
