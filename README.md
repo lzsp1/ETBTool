@@ -280,4 +280,3 @@ MULTIPLAYER_<存档名>_<难度>.sav
 | Mod 下载站 | [https://etbtoolmod.xn--online-o20ki81q.top/](https://etbtoolmod.xn--online-o20ki81q.top/) |
 | Releases 下载 | [https://github.com/lzsp1/ETBTool/releases](https://github.com/lzsp1/ETBTool/releases) |
 | 提交 Mod 昵称 | [https://github.com/lzsp1/ETBTool/issues](https://github.com/lzsp1/ETBTool/issues) |
-```
