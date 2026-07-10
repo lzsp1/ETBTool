@@ -1,5 +1,3 @@
-这是根据您的要求优化的 `README.md` 文件。它采用了更清晰的 Markdown 结构，整合了项目信息、功能列表、构建指南等核心内容，使其更易于阅读和维护。
-```markdown
 # ETB Tool
 
 **逃离后室（Escape the Backrooms）游戏辅助工具**
@@ -220,8 +218,6 @@ MULTIPLAYER_<存档名>_<难度>.sav
 | `Normal` | 普通 | 蓝色 |
 | `Hard` | 困难 | 橙色 |
 | `Nightmare` | 噩梦 | 红色 |
-| `Practice` | 练习 | 紫色 |
-| `Tutorial` | 教程 | 青色 |
 
 > 不符合命名规则的文件将被自动隐藏。
 
