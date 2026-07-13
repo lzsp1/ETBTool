@@ -8,9 +8,9 @@
 		<ApplicationIcon>etb.ico</ApplicationIcon>
 		<AssemblyName>ETBTool</AssemblyName>
 		<RootNamespace>ETBTool</RootNamespace>
-		<Version>0.0.02</Version>
-		<AssemblyVersion>0.0.02</AssemblyVersion>
-		<FileVersion>0.0.02</FileVersion>
+		<Version>0.0.03</Version>
+		<AssemblyVersion>0.0.03</AssemblyVersion>
+		<FileVersion>0.0.03</FileVersion>
 		<Authors>云杰</Authors>
 		<Company>逃离后室玩友群</Company>
 		<Description>逃离后室游戏工具</Description>

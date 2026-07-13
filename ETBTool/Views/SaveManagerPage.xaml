@@ -1,18 +1,14 @@
 <Page x:Class="ETBTool.Views.SaveManagerPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:etb="clr-namespace:ETBTool.Utils"
-      Background="Transparent"
-      etb:ScrollBubble.Enabled="True">
+      xmlns:etb="clr-namespace:ETBTool.Utils" Background="Transparent" etb:ScrollBubble.Enabled="True">
 	<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
 		<StackPanel>
-			<TextBlock Style="{StaticResource PageTitle}" Text="存档管理"/>
-			<TextBlock Style="{StaticResource MutedText}" Text="管理你的游戏存档文件（支持 Ctrl+点击多选）"
-                       Margin="0,-4,0,20"/>
-
+			<TextBlock x:Name="PageTitle" Style="{StaticResource PageTitle}"/>
+			<TextBlock x:Name="PageSub" Style="{StaticResource MutedText}" Margin="0,-4,0,20"/>
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
-					<TextBlock Style="{StaticResource SectionTitle}" Text="存档路径"/>
+					<TextBlock x:Name="LblPath" Style="{StaticResource SectionTitle}"/>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>
@@ -20,18 +16,14 @@
 							<ColumnDefinition Width="Auto"/>
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="SavePathBox" IsReadOnly="True" Margin="0,0,8,0"/>
-						<Button Grid.Column="1" Content="打开" Style="{StaticResource BaseButton}"
-                                Click="OpenFolder" Margin="0,0,8,0"/>
-						<Button Grid.Column="2" Content="复制" Style="{StaticResource BaseButton}"
-                                Click="CopyPath"/>
+						<Button x:Name="BtnOpen" Grid.Column="1" Style="{StaticResource BaseButton}" Click="OpenFolder" Margin="0,0,8,0"/>
+						<Button x:Name="BtnCopy" Grid.Column="2" Style="{StaticResource BaseButton}" Click="CopyPath"/>
 					</Grid>
 				</StackPanel>
 			</Border>
-
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
-					<TextBlock Style="{StaticResource SectionTitle}" Text="存档文件列表"/>
-
+					<TextBlock x:Name="LblList" Style="{StaticResource SectionTitle}"/>
 					<Grid Margin="0,0,0,4">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="80"/>
@@ -39,17 +31,13 @@
 							<ColumnDefinition Width="120"/>
 							<ColumnDefinition Width="160"/>
 						</Grid.ColumnDefinitions>
-						<TextBlock Text="难度" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="1" Text="存档名称" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="2" Text="大小" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="3" Text="修改时间" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HDiff" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HName" Grid.Column="1" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HSize" Grid.Column="2" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HMod"  Grid.Column="3" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 					</Grid>
 					<Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,4"/>
-
-					<!-- ★ 多选 -->
-					<ListBox x:Name="FileListBox" Height="280" Margin="0,0,0,12"
-                             SelectionMode="Extended"
-                             ItemContainerStyle="{StaticResource TableListBoxItem}">
+					<ListBox x:Name="FileListBox" Height="280" Margin="0,0,0,12" SelectionMode="Extended" ItemContainerStyle="{StaticResource TableListBoxItem}">
 						<ListBox.ItemTemplate>
 							<DataTemplate>
 								<Grid>
@@ -59,27 +47,21 @@
 										<ColumnDefinition Width="120"/>
 										<ColumnDefinition Width="160"/>
 									</Grid.ColumnDefinitions>
-									<Border CornerRadius="4" Padding="6,2" Margin="0,0,10,0"
-                                            HorizontalAlignment="Left" Background="{Binding DiffColor}">
-										<TextBlock Text="{Binding Difficulty}" FontSize="11"
-                                                   Foreground="White" FontWeight="SemiBold"/>
+									<Border CornerRadius="4" Padding="6,2" Margin="0,0,10,0" HorizontalAlignment="Left" Background="{Binding DiffColor}">
+										<TextBlock Text="{Binding Difficulty}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
 									</Border>
-									<TextBlock Grid.Column="1" Text="{Binding SaveName}"
-                                               Style="{StaticResource ListPrimaryText}"/>
-									<TextBlock Grid.Column="2" Text="{Binding Size}"
-                                               Style="{StaticResource ListSecondaryText}"/>
-									<TextBlock Grid.Column="3" Text="{Binding Modified}"
-                                               Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="1" Text="{Binding SaveName}" Style="{StaticResource ListPrimaryText}"/>
+									<TextBlock Grid.Column="2" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="3" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
 								</Grid>
 							</DataTemplate>
 						</ListBox.ItemTemplate>
 					</ListBox>
-
 					<WrapPanel>
-						<Button Content="刷新"    Style="{StaticResource AccentButton}" Click="Refresh" Margin="0,0,8,0"/>
-						<Button Content="编辑选中" Style="{StaticResource BaseButton}" Click="Edit" Margin="0,0,8,0"/>
-						<Button Content="删除选中" Style="{StaticResource DangerButton}" Click="Delete" Margin="0,0,8,0"/>
-						<Button Content="清理全部" Style="{StaticResource DangerButton}" Click="ClearAll"/>
+						<Button x:Name="BtnRefresh" Style="{StaticResource AccentButton}" Click="Refresh" Margin="0,0,8,0"/>
+						<Button x:Name="BtnEdit" Style="{StaticResource BaseButton}" Click="Edit" Margin="0,0,8,0"/>
+						<Button x:Name="BtnDel" Style="{StaticResource DangerButton}" Click="Delete" Margin="0,0,8,0"/>
+						<Button x:Name="BtnClear" Style="{StaticResource DangerButton}" Click="ClearAll"/>
 					</WrapPanel>
 				</StackPanel>
 			</Border>

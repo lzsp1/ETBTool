@@ -10,18 +10,32 @@ namespace ETBTool.Views
 {
     public partial class UpdatePage : Page
     {
-        private string _latestDownloadUrl = "";
-        private string _latestMirrorUrl = "";
+        private string _latestDownloadUrl = "", _latestMirrorUrl = "";
 
         public UpdatePage()
         {
             InitializeComponent();
+            LanguageManager.LanguageChanged += RefreshText;
+            Unloaded += (_, _) => LanguageManager.LanguageChanged -= RefreshText;
             CurVer.Text = $"v{GamePaths.DisplayVersion}";
+            RefreshText();
         }
 
-        private async void Check_Click(object sender, RoutedEventArgs e)
+        private void RefreshText()
         {
-            StatusText.Text = "正在检查更新...";
+            PageTitle.Text = LanguageManager.UpdateTitle;
+            LblCurVer.Text = LanguageManager.UpdateCurVer;
+            CurVer.Text = $"v{GamePaths.DisplayVersion}";
+            LblCheck.Text = LanguageManager.UpdateTitle;
+            BtnCheck.Content = LanguageManager.BtnCheckUpdate;
+            LblLog.Text = LanguageManager.UpdateLogSection;
+            BtnChangelog.Content = LanguageManager.BtnViewLog;
+            DLBtn.Content = LanguageManager.BtnDL;
+        }
+
+        private async void Check_Click(object s, RoutedEventArgs e)
+        {
+            StatusText.Text = LanguageManager.UpdateChecking;
             Progress.Visibility = Visibility.Visible;
             Progress.IsIndeterminate = true;
             UpdatePanel.Visibility = Visibility.Collapsed;
@@ -32,7 +46,7 @@ namespace ETBTool.Views
             Progress.IsIndeterminate = false;
             Progress.Value = 100;
             StatusText.Text = result.message;
-            Logger.Log($"检查更新: {result.message}");
+            Logger.Log($"更新检查: {result.message}");
 
             if (result.hasUpdate)
             {
@@ -41,26 +55,24 @@ namespace ETBTool.Views
                 UpdatePanel.Visibility = Visibility.Visible;
                 DLBtn.Visibility = Visibility.Visible;
                 UpdateText.Text =
-                    $"最新版本: v{result.latest}\n" +
-                    $"当前版本: v{GamePaths.DisplayVersion}\n\n" +
-                    $"请前往下载页面获取最新版本。";
+                    $"{LanguageManager.UpdateLatest}: v{result.latest}\n" +
+                    $"{LanguageManager.UpdateCurrent}: v{GamePaths.DisplayVersion}\n\n" +
+                    LanguageManager.UpdateHint;
                 UpdatePanel.Opacity = 0;
                 UpdatePanel.BeginAnimation(UIElement.OpacityProperty,
                     new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300)));
-                Toast.Show($"发现新版本 v{result.latest}", ToastType.Info);
+                Toast.Show(LanguageManager.UpdateFound(result.latest), ToastType.Info);
             }
             else
             {
-                Toast.Show("当前已是最新版本", ToastType.Success);
+                Toast.Show(LanguageManager.MsgNoUpdate, ToastType.Success);
             }
         }
 
-        private void DL_Click(object sender, RoutedEventArgs e)
-        {
+        private void DL_Click(object s, RoutedEventArgs e) =>
             UpdateChecker.OpenUpdatePage(_latestDownloadUrl, _latestMirrorUrl);
-        }
 
-        private void OpenLog_Click(object sender, RoutedEventArgs e)
+        private void OpenLog_Click(object s, RoutedEventArgs e)
         {
             try
             {

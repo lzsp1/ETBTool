@@ -1,19 +1,14 @@
 <Page x:Class="ETBTool.Views.ModManagerPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:etb="clr-namespace:ETBTool.Utils"
-      Background="Transparent"
-      etb:ScrollBubble.Enabled="True">
+      xmlns:etb="clr-namespace:ETBTool.Utils" Background="Transparent" etb:ScrollBubble.Enabled="True">
 	<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
 		<StackPanel>
-			<TextBlock Style="{StaticResource PageTitle}" Text="Mod 管理"/>
-			<TextBlock Style="{StaticResource MutedText}"
-                       Text="管理已安装的 Mod（自动翻译、Ctrl+点击多选、双击进入文件夹）"
-                       Margin="0,-4,0,20"/>
-
+			<TextBlock x:Name="PageTitle" Style="{StaticResource PageTitle}"/>
+			<TextBlock x:Name="PageSub" Style="{StaticResource MutedText}" Margin="0,-4,0,20"/>
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
-					<TextBlock Style="{StaticResource SectionTitle}" Text="Mod 安装路径"/>
+					<TextBlock x:Name="LblPath" Style="{StaticResource SectionTitle}"/>
 					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="*"/>
@@ -21,24 +16,18 @@
 							<ColumnDefinition Width="Auto"/>
 						</Grid.ColumnDefinitions>
 						<TextBox x:Name="ModPathBox" IsReadOnly="True" Margin="0,0,8,0"/>
-						<Button Grid.Column="1" Content="打开" Style="{StaticResource BaseButton}"
-                                Click="OpenRoot" Margin="0,0,8,0"/>
-						<Button Grid.Column="2" Content="复制" Style="{StaticResource BaseButton}"
-                                Click="CopyRoot"/>
+						<Button x:Name="BtnOpen" Grid.Column="1" Style="{StaticResource BaseButton}" Click="OpenRoot" Margin="0,0,8,0"/>
+						<Button x:Name="BtnCopy" Grid.Column="2" Style="{StaticResource BaseButton}" Click="CopyRoot"/>
 					</Grid>
 				</StackPanel>
 			</Border>
-
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
 					<StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-						<TextBlock Style="{StaticResource SectionTitle}" Text="Mod 文件列表" Margin="0"/>
-						<TextBlock x:Name="LoadingHint" Style="{StaticResource MutedText}"
-                                   Text="（翻译加载中...）" VerticalAlignment="Center" Visibility="Collapsed"/>
-						<TextBlock x:Name="CurrentDirText" Style="{StaticResource MutedText}"
-                                   VerticalAlignment="Center" Margin="12,0,0,0"/>
+						<TextBlock x:Name="LblList" Style="{StaticResource SectionTitle}" Margin="0"/>
+						<TextBlock x:Name="LoadingHint" Style="{StaticResource MutedText}" VerticalAlignment="Center" Visibility="Collapsed"/>
+						<TextBlock x:Name="CurrentDirText" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="12,0,0,0"/>
 					</StackPanel>
-
 					<Grid Margin="0,0,0,4">
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="60"/>
@@ -47,19 +36,14 @@
 							<ColumnDefinition Width="120"/>
 							<ColumnDefinition Width="160"/>
 						</Grid.ColumnDefinitions>
-						<TextBlock Text="状态" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="1" Text="名称" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="2" Text="文件" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="3" Text="大小" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock Grid.Column="4" Text="修改时间" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HStatus" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HName"   Grid.Column="1" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HFile"   Grid.Column="2" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HSize"   Grid.Column="3" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HMod"    Grid.Column="4" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 					</Grid>
 					<Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,4"/>
-
-					<ListBox x:Name="ModListBox" Height="260" Margin="0,0,0,12"
-                             SelectionMode="Extended"
-                             SelectionChanged="ModSel"
-                             MouseDoubleClick="ModDblClick"
-                             ItemContainerStyle="{StaticResource TableListBoxItem}">
+					<ListBox x:Name="ModListBox" Height="260" Margin="0,0,0,12" SelectionMode="Extended" SelectionChanged="ModSel" MouseDoubleClick="ModDblClick" ItemContainerStyle="{StaticResource TableListBoxItem}">
 						<ListBox.ItemTemplate>
 							<DataTemplate>
 								<Grid>
@@ -70,44 +54,32 @@
 										<ColumnDefinition Width="120"/>
 										<ColumnDefinition Width="160"/>
 									</Grid.ColumnDefinitions>
-									<Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left"
-                                            Background="{Binding StatusColor}">
-										<TextBlock Text="{Binding Status}" FontSize="11"
-                                                   Foreground="White" FontWeight="SemiBold"/>
+									<Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{Binding StatusColor}">
+										<TextBlock Text="{Binding Status}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
 									</Border>
-									<TextBlock Grid.Column="1" Text="{Binding DisplayName}"
-                                               Style="{StaticResource ListPrimaryText}"/>
-									<TextBlock Grid.Column="2" Text="{Binding FileName}"
-                                               Style="{StaticResource ListSecondaryText}"/>
-									<TextBlock Grid.Column="3" Text="{Binding Size}"
-                                               Style="{StaticResource ListSecondaryText}"/>
-									<TextBlock Grid.Column="4" Text="{Binding Modified}"
-                                               Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource ListPrimaryText}"/>
+									<TextBlock Grid.Column="2" Text="{Binding FileName}" Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="3" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="4" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
 								</Grid>
 							</DataTemplate>
 						</ListBox.ItemTemplate>
 					</ListBox>
-
 					<WrapPanel>
-						<Button Content="上级目录" Style="{StaticResource BaseButton}" Click="GoUp" Margin="0,0,8,0"/>
-						<Button Content="刷新"    Style="{StaticResource AccentButton}" Click="Refresh" Margin="0,0,8,0"/>
-						<Button Content="导入Mod" Style="{StaticResource BaseButton}" Click="Import" Margin="0,0,8,0"/>
-						<Button Content="打包选中" Style="{StaticResource BaseButton}" Click="Pack" Margin="0,0,8,0"/>
-						<Button Content="删除选中" Style="{StaticResource DangerButton}" Click="Del"/>
+						<Button x:Name="BtnUp" Style="{StaticResource BaseButton}" Click="GoUp" Margin="0,0,8,0"/>
+						<Button x:Name="BtnRefresh" Style="{StaticResource AccentButton}" Click="Refresh" Margin="0,0,8,0"/>
+						<Button x:Name="BtnImport" Style="{StaticResource BaseButton}" Click="Import" Margin="0,0,8,0"/>
+						<Button x:Name="BtnPack" Style="{StaticResource BaseButton}" Click="Pack" Margin="0,0,8,0"/>
+						<Button x:Name="BtnDel" Style="{StaticResource DangerButton}" Click="Del"/>
 					</WrapPanel>
 				</StackPanel>
 			</Border>
-
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
-					<TextBlock Style="{StaticResource SectionTitle}" Text="Mod 操作"/>
-					<Button x:Name="ToggleBtn" Content="禁用/启用"
-                            Style="{StaticResource BaseButton}" Click="Toggle"
-                            HorizontalAlignment="Left" Margin="0,0,0,12"/>
-					<TextBlock Foreground="{DynamicResource TextPrimary}"
-                               Text="如果你的模组没被收录中文名，可以提交昵称帮助完善："/>
-					<Button Content="提交 Mod 昵称" Style="{StaticResource AccentButton}"
-                            Click="SubmitNick" Margin="0,8,0,0" HorizontalAlignment="Left"/>
+					<TextBlock x:Name="LblActions" Style="{StaticResource SectionTitle}"/>
+					<Button x:Name="ToggleBtn" Style="{StaticResource BaseButton}" Click="Toggle" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+					<TextBlock x:Name="NickDesc" Foreground="{DynamicResource TextPrimary}"/>
+					<Button x:Name="BtnNick" Style="{StaticResource AccentButton}" Click="SubmitNick" Margin="0,8,0,0" HorizontalAlignment="Left"/>
 				</StackPanel>
 			</Border>
 		</StackPanel>

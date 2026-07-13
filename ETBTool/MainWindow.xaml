@@ -5,9 +5,7 @@
         Title="ETB Tool" Height="800" Width="1280" MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen" Background="Transparent"
         AllowsTransparency="True" WindowStyle="None" ResizeMode="CanResizeWithGrip">
-
 	<Window.Resources>
-		<!-- 最小化按钮 -->
 		<Style x:Key="WinBtnMin" TargetType="Button">
 			<Setter Property="Width" Value="48"/>
 			<Setter Property="Height" Value="42"/>
@@ -18,19 +16,11 @@
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="Button">
-						<Border x:Name="bd" Background="{TemplateBinding Background}"
-                                BorderThickness="0,0,0,2" BorderBrush="Transparent">
+						<Border x:Name="bd" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent">
 							<Border.RenderTransform>
 								<ScaleTransform CenterX="24" CenterY="21"/>
 							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x2500;"
-                                       FontSize="14" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{TemplateBinding Foreground}">
-								<TextBlock.RenderTransform>
-									<ScaleTransform CenterX="0" CenterY="0"/>
-								</TextBlock.RenderTransform>
-							</TextBlock>
+							<TextBlock x:Name="ico" Text="&#x2500;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
 						</Border>
 						<ControlTemplate.Triggers>
 							<Trigger Property="IsMouseOver" Value="True">
@@ -39,12 +29,10 @@
 										<SolidColorBrush Color="{DynamicResource HoverTintColor}"/>
 									</Setter.Value>
 								</Setter>
-								<Setter TargetName="bd" Property="BorderBrush"
-                                        Value="{DynamicResource AccentColor}"/>
+								<Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
 							</Trigger>
 							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="bd" Property="Background"
-                                        Value="{DynamicResource AccentColor}"/>
+								<Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentColor}"/>
 								<Setter TargetName="ico" Property="Foreground" Value="White"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
@@ -55,34 +43,28 @@
 				<EventTrigger RoutedEvent="MouseEnter">
 					<BeginStoryboard>
 						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.1" Duration="0:0:0.15">
+							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.1" Duration="0:0:0.15">
 								<DoubleAnimation.EasingFunction>
 									<CubicEase EasingMode="EaseOut"/>
 								</DoubleAnimation.EasingFunction>
 							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.1" Duration="0:0:0.15">
+							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.1" Duration="0:0:0.15">
 								<DoubleAnimation.EasingFunction>
 									<CubicEase EasingMode="EaseOut"/>
 								</DoubleAnimation.EasingFunction>
 							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="Opacity"
-                                             To="1.0" Duration="0:0:0.12"/>
 						</Storyboard>
 					</BeginStoryboard>
 				</EventTrigger>
 				<EventTrigger RoutedEvent="MouseLeave">
 					<BeginStoryboard>
 						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.0" Duration="0:0:0.2">
+							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.2">
 								<DoubleAnimation.EasingFunction>
 									<CubicEase EasingMode="EaseOut"/>
 								</DoubleAnimation.EasingFunction>
 							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.0" Duration="0:0:0.2">
+							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.2">
 								<DoubleAnimation.EasingFunction>
 									<CubicEase EasingMode="EaseOut"/>
 								</DoubleAnimation.EasingFunction>
@@ -92,31 +74,15 @@
 				</EventTrigger>
 			</Style.Triggers>
 		</Style>
-
-		<!-- 最大化按钮 -->
-		<Style x:Key="WinBtnMax" TargetType="Button">
-			<Setter Property="Width" Value="48"/>
-			<Setter Property="Height" Value="42"/>
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Cursor" Value="Hand"/>
+		<Style x:Key="WinBtnMax" TargetType="Button" BasedOn="{StaticResource WinBtnMin}">
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="Button">
-						<Border x:Name="bd" Background="{TemplateBinding Background}"
-                                BorderThickness="0,0,0,2" BorderBrush="Transparent">
+						<Border x:Name="bd" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent">
 							<Border.RenderTransform>
 								<ScaleTransform CenterX="24" CenterY="21"/>
 							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x25A1;"
-                                       FontSize="14" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{TemplateBinding Foreground}">
-								<TextBlock.RenderTransform>
-									<ScaleTransform CenterX="0" CenterY="0"/>
-								</TextBlock.RenderTransform>
-							</TextBlock>
+							<TextBlock x:Name="ico" Text="&#x25A1;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
 						</Border>
 						<ControlTemplate.Triggers>
 							<Trigger Property="IsMouseOver" Value="True">
@@ -125,66 +91,18 @@
 										<SolidColorBrush Color="{DynamicResource HoverTintColor}"/>
 									</Setter.Value>
 								</Setter>
-								<Setter TargetName="bd" Property="BorderBrush"
-                                        Value="{DynamicResource AccentColor}"/>
+								<Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
 							</Trigger>
 							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="bd" Property="Background"
-                                        Value="{DynamicResource AccentColor}"/>
+								<Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentColor}"/>
 								<Setter TargetName="ico" Property="Foreground" Value="White"/>
 							</Trigger>
 						</ControlTemplate.Triggers>
 					</ControlTemplate>
 				</Setter.Value>
 			</Setter>
-			<Style.Triggers>
-				<EventTrigger RoutedEvent="MouseEnter">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-				<EventTrigger RoutedEvent="MouseLeave">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-			</Style.Triggers>
 		</Style>
-
-		<!-- 关闭按钮 -->
-		<Style x:Key="WinBtnClose" TargetType="Button">
-			<Setter Property="Width" Value="48"/>
-			<Setter Property="Height" Value="42"/>
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Cursor" Value="Hand"/>
+		<Style x:Key="WinBtnClose" TargetType="Button" BasedOn="{StaticResource WinBtnMin}">
 			<Setter Property="Template">
 				<Setter.Value>
 					<ControlTemplate TargetType="Button">
@@ -192,14 +110,7 @@
 							<Border.RenderTransform>
 								<ScaleTransform CenterX="24" CenterY="21"/>
 							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x2715;"
-                                       FontSize="14" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="{TemplateBinding Foreground}">
-								<TextBlock.RenderTransform>
-									<ScaleTransform CenterX="0" CenterY="0"/>
-								</TextBlock.RenderTransform>
-							</TextBlock>
+							<TextBlock x:Name="ico" Text="&#x2715;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
 						</Border>
 						<ControlTemplate.Triggers>
 							<Trigger Property="IsMouseOver" Value="True">
@@ -214,50 +125,9 @@
 					</ControlTemplate>
 				</Setter.Value>
 			</Setter>
-			<Style.Triggers>
-				<EventTrigger RoutedEvent="MouseEnter">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-				<EventTrigger RoutedEvent="MouseLeave">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                             To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                             To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-			</Style.Triggers>
 		</Style>
 	</Window.Resources>
-
-	<Border CornerRadius="12" BorderThickness="1"
-            BorderBrush="{DynamicResource BorderColor}"
-            Background="{DynamicResource WindowBackground}">
+	<Border CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource WindowBackground}">
 		<Border.Effect>
 			<DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.2" Color="#000"/>
 		</Border.Effect>
@@ -266,25 +136,16 @@
 				<RowDefinition Height="42"/>
 				<RowDefinition Height="*"/>
 			</Grid.RowDefinitions>
-
-			<!-- 标题栏 -->
-			<Grid Grid.Row="0" Background="{DynamicResource SidebarBackground}"
-                  MouseLeftButtonDown="TitleBar_MouseDown">
+			<Grid Grid.Row="0" Background="{DynamicResource SidebarBackground}" MouseLeftButtonDown="TitleBar_MouseDown">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="*"/>
 					<ColumnDefinition Width="Auto"/>
 				</Grid.ColumnDefinitions>
 				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
-					<Button x:Name="MenuBtn" Content="&#x2630;" Click="ToggleNav"
-                            Background="Transparent" Foreground="{DynamicResource TextPrimary}"
-                            BorderThickness="0" FontSize="18" Width="36" Height="36"
-                            Cursor="Hand" Padding="0"/>
-					<TextBlock Text="ETB Tool" FontSize="14" FontWeight="Bold"
-                               Foreground="{DynamicResource TextPrimary}"
-                               VerticalAlignment="Center" Margin="10,0,0,0"/>
-					<TextBlock x:Name="TitleVersionText" FontSize="11"
-                               Foreground="{DynamicResource TextSecondary}"
-                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+					<Button x:Name="MenuBtn" Content="&#x2630;" Click="ToggleNav" Background="Transparent" Foreground="{DynamicResource TextPrimary}" BorderThickness="0" FontSize="18" Width="36" Height="36" Cursor="Hand" Padding="0"/>
+					<TextBlock Text="ETB Tool" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+					<!-- ★ 版本号，不是工具名 -->
+					<TextBlock x:Name="TitleVersionText" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,0,0"/>
 				</StackPanel>
 				<StackPanel Grid.Column="1" Orientation="Horizontal">
 					<Button Click="Min_Click" Style="{StaticResource WinBtnMin}"/>
@@ -292,61 +153,39 @@
 					<Button Click="Close_Click" Style="{StaticResource WinBtnClose}"/>
 				</StackPanel>
 			</Grid>
-
-			<!-- 主体 -->
 			<Grid Grid.Row="1">
 				<Grid.ColumnDefinitions>
 					<ColumnDefinition Width="Auto"/>
 					<ColumnDefinition Width="*"/>
 				</Grid.ColumnDefinitions>
-
-				<Border x:Name="Sidebar" Width="220" Grid.Column="0"
-                        Background="{DynamicResource SidebarBackground}"
-                        CornerRadius="0,0,0,12" ClipToBounds="True"
-                        CacheMode="BitmapCache">
+				<Border x:Name="Sidebar" Width="220" Grid.Column="0" Background="{DynamicResource SidebarBackground}" CornerRadius="0,0,0,12" ClipToBounds="True" CacheMode="BitmapCache">
 					<Grid>
 						<Grid.RowDefinitions>
 							<RowDefinition Height="*"/>
 							<RowDefinition Height="Auto"/>
 						</Grid.RowDefinitions>
 						<StackPanel x:Name="NavTop" Margin="12,16,12,8">
-							<RadioButton x:Name="NavSave"     Style="{StaticResource NavButton}"
-                                         Content="存档管理"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavCrash"    Style="{StaticResource NavButton}"
-                                         Content="崩溃日志"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavUE4"      Style="{StaticResource NavButton}"
-                                         Content="UE4管理"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavMod"      Style="{StaticResource NavButton}"
-                                         Content="Mod管理"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavDownload" Style="{StaticResource NavButton}"
-                                         Content="下载Mod"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavPaths"    Style="{StaticResource NavButton}"
-                                         Content="查看路径"      Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavLog"      Style="{StaticResource NavButton}"
-                                         Content="日志"          Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavSave"     Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavCrash"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavUE4"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavMod"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavDownload" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavPaths"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavLog"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
 						</StackPanel>
 						<StackPanel x:Name="NavBot" Grid.Row="1" Margin="12,0,12,16">
-							<RadioButton x:Name="NavSettings" Style="{StaticResource NavButton}"
-                                         Content="设置"          Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavAbout"    Style="{StaticResource NavButton}"
-                                         Content="关于"          Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavUpdate"   Style="{StaticResource NavButton}"
-                                         Content="检查更新"      Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavSettings" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavAbout"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+							<RadioButton x:Name="NavUpdate"   Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
 						</StackPanel>
 					</Grid>
 				</Border>
-
-				<Frame x:Name="ContentFrame" Grid.Column="1"
-                       NavigationUIVisibility="Hidden" Background="Transparent"
-                       etb:ScrollBubble.Enabled="True">
+				<Frame x:Name="ContentFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Background="Transparent" etb:ScrollBubble.Enabled="True">
 					<Frame.RenderTransform>
 						<TranslateTransform/>
 					</Frame.RenderTransform>
 				</Frame>
-
-				<StackPanel x:Name="ToastOverlay" Grid.Column="1"
-                            HorizontalAlignment="Right" VerticalAlignment="Top"
-                            Margin="0,8,16,0" IsHitTestVisible="False"/>
+				<StackPanel x:Name="ToastOverlay" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,16,0" IsHitTestVisible="False"/>
 			</Grid>
 		</Grid>
 	</Border>

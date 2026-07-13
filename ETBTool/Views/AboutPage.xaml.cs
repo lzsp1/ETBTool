@@ -13,7 +13,23 @@ namespace ETBTool.Views
         public AboutPage()
         {
             InitializeComponent();
+            LanguageManager.LanguageChanged += RefreshText;
+            Unloaded += (_, _) => LanguageManager.LanguageChanged -= RefreshText;
             VerText.Text = $"v{GamePaths.DisplayVersion}";
+            RefreshText();
+        }
+
+        private void RefreshText()
+        {
+            LblDesc.Text = LanguageManager.AboutDesc;
+            AboutDesc.Text = LanguageManager.AboutDesc;
+            LblFeatures.Text = LanguageManager.AboutFeatures;
+            FeatureList.Text = LanguageManager.AboutFeatureList;
+            LblLicense.Text = LanguageManager.AboutLicense;
+            LicenseText.Text = LanguageManager.AboutLicenseText;
+            BtnConfig.Content = LanguageManager.BtnConfig;
+            BtnWebsite.Content = LanguageManager.BtnWebsite;
+            BtnSource.Content = LanguageManager.BtnSource;
         }
 
         private void Config_Click(object s, RoutedEventArgs e)

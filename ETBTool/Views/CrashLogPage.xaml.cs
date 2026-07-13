@@ -26,8 +26,27 @@ namespace ETBTool.Views
         public CrashLogPage()
         {
             InitializeComponent();
+            LanguageManager.LanguageChanged += RefreshText;
             LogPathBox.Text = GamePaths.CrashLogPath;
             LoadFiles();
+            RefreshText();
+        }
+
+        private void RefreshText()
+        {
+            PageTitle.Text = LanguageManager.CrashTitle;
+            PageSub.Text = LanguageManager.CrashSub;
+            LblPath.Text = LanguageManager.CrashPath;
+            LblList.Text = LanguageManager.CrashList;
+            BtnOpen.Content = LanguageManager.BtnOpen;
+            BtnCopy.Content = LanguageManager.BtnCopy;
+            HName.Text = LanguageManager.ColName;
+            HSize.Text = LanguageManager.ColSize;
+            HMod.Text = LanguageManager.ColModified;
+            BtnRefresh.Content = LanguageManager.BtnRefresh;
+            BtnOpenSel.Content = LanguageManager.BtnOpenSel;
+            BtnDel.Content = LanguageManager.BtnDelete;
+            BtnClear.Content = LanguageManager.BtnClearLogs;
         }
 
         private void LoadFiles()
@@ -36,8 +55,10 @@ namespace ETBTool.Views
             try
             {
                 if (!Directory.Exists(GamePaths.CrashLogPath))
-                { _items = Array.Empty<CrashItem>(); return; }
-
+                {
+                    _items = Array.Empty<CrashItem>();
+                    return;
+                }
                 _items = Directory.GetFiles(GamePaths.CrashLogPath)
                     .Select(f =>
                     {
@@ -54,26 +75,26 @@ namespace ETBTool.Views
                     .ToArray();
 
                 foreach (var item in _items) FileListBox.Items.Add(item);
-                Logger.Log($"已加载 {_items.Length} 个日志");
+                Logger.Log(LanguageManager.MsgLogLoaded(_items.Length));
             }
-            catch (Exception ex) { Logger.Log($"读取失败: {ex.Message}"); }
+            catch (Exception ex) { Logger.Log(ex.Message); }
         }
 
         private CrashItem[] GetSelectedItems()
         {
-            var result = new List<CrashItem>();
-            foreach (var obj in FileListBox.SelectedItems)
-                if (obj is CrashItem ci) result.Add(ci);
-            return result.ToArray();
+            var r = new List<CrashItem>();
+            foreach (var o in FileListBox.SelectedItems)
+                if (o is CrashItem ci) r.Add(ci);
+            return r.ToArray();
         }
 
         private void OpenFolder_Click(object s, RoutedEventArgs e)
         {
             try
             {
-                var path = GamePaths.CrashLogPath;
-                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-                Process.Start("explorer.exe", path);
+                if (!Directory.Exists(GamePaths.CrashLogPath))
+                    Directory.CreateDirectory(GamePaths.CrashLogPath);
+                Process.Start("explorer.exe", GamePaths.CrashLogPath);
             }
             catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
         }
@@ -81,11 +102,15 @@ namespace ETBTool.Views
         private void CopyPath_Click(object s, RoutedEventArgs e)
         {
             bool ok = Logger.SafeSetClipboard(GamePaths.CrashLogPath);
-            Toast.Show(ok ? "已复制" : "复制失败", ok ? ToastType.Success : ToastType.Error);
+            Toast.Show(ok ? LanguageManager.MsgCopied : LanguageManager.MsgCopyFail,
+                ok ? ToastType.Success : ToastType.Error);
         }
 
         private void Refresh_Click(object s, RoutedEventArgs e)
-        { LoadFiles(); Toast.Show("已刷新", ToastType.Info); }
+        {
+            LoadFiles();
+            Toast.Show(LanguageManager.MsgRefreshed, ToastType.Info);
+        }
 
         private void Open_Click(object s, RoutedEventArgs e)
         {
@@ -104,27 +129,31 @@ namespace ETBTool.Views
             var sel = GetSelectedItems();
             if (sel.Length == 0) return;
             if (ThemedDialog.Show(Window.GetWindow(this),
-                $"确定删除 {sel.Length} 个日志？", "确认",
+                LanguageManager.MsgConfirmDelLog(sel.Length),
+                LanguageManager.BtnConfirm,
                 MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
             try
             {
                 foreach (var item in sel) File.Delete(item.FilePath);
                 LoadFiles();
-                Toast.Show($"已删除 {sel.Length} 个", ToastType.Success);
+                Toast.Show(LanguageManager.MsgSaveDeleted(sel.Length), ToastType.Success);
             }
             catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
         }
 
+        // ★ 改用 MsgCrashLogCleared
         private void ClearAll_Click(object s, RoutedEventArgs e)
         {
             if (ThemedDialog.Show(Window.GetWindow(this),
-                "确定清空全部崩溃日志？", "确认",
+                LanguageManager.MsgConfirmClearLogs,
+                LanguageManager.BtnConfirm,
                 MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
             try
             {
-                foreach (var f in Directory.GetFiles(GamePaths.CrashLogPath)) File.Delete(f);
+                foreach (var f in Directory.GetFiles(GamePaths.CrashLogPath))
+                    File.Delete(f);
                 LoadFiles();
-                Toast.Show("已清空", ToastType.Success);
+                Toast.Show(LanguageManager.MsgCrashLogCleared, ToastType.Success);
             }
             catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
         }

@@ -32,7 +32,7 @@ namespace ETBTool.Models
         public static string NicknameSubmitUrl =>
             "https://github.com/lzsp1/ETBTool/issues";
 
-        public const string DisplayVersion = "0.0.02";
+        public const string DisplayVersion = "0.0.03";
         public const string SteamAppId = "1943950";
 
         public static string SteamGameUri => $"steam://rungameid/{SteamAppId}";
