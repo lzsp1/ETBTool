@@ -1,6 +1,7 @@
 # ETB Tool
 
 **逃离后室（Escape the Backrooms）游戏辅助工具**
+- [English Version](https://github.com/lzsp1/ETBTool/blob/main/README.en.md)
 
 ![Version](https://img.shields.io/badge/version-0.0.02-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
