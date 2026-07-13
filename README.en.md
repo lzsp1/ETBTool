@@ -1,7 +1,7 @@
 # ETB Tool
 
 **Escape the Backrooms Game Utility Tool**
-
+- [中文](https://github.com/lzsp1/ETBTool/blob/main/README.md)
 ---
 
 ## 📖 Table of Contents
