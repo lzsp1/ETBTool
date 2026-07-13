@@ -2,6 +2,11 @@
 
 **Escape the Backrooms Game Utility Tool**
 - [中文](https://github.com/lzsp1/ETBTool/blob/main/README.md)
+
+![Version](https://img.shields.io/badge/version-0.0.02-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
+![.NET](https://img.shields.io/badge/.NET-8.0-purple)
 ---
 
 ## 📖 Table of Contents
