@@ -7,8 +7,11 @@ using ETBTool.Models;
 
 namespace ETBTool.Utils
 {
-    public static class LanguageManager
+    public class LanguageManager
     {
+        // ★ 新增：XAML 中 {x:Static u:LanguageManager.Instance} 需要
+        public static LanguageManager Instance { get; } = new LanguageManager();
+
         public static bool IsChinese { get; private set; } = true;
         public static event Action? LanguageChanged;
 
@@ -36,13 +39,14 @@ namespace ETBTool.Utils
         {
             try
             {
-                var dict = new Dictionary<string, string>();
+                var dict = new Dictionary<string, JsonElement>();
                 if (File.Exists(GamePaths.SettingsFile))
-                    foreach (var p in JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile))
-                        .RootElement.EnumerateObject())
-                        if (p.Value.ValueKind == JsonValueKind.String)
-                            dict[p.Name] = p.Value.GetString() ?? "";
-                dict["Language"] = IsChinese ? "zh" : "en";
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile));
+                    foreach (var p in document.RootElement.EnumerateObject())
+                        dict[p.Name] = p.Value.Clone();
+                }
+                dict["Language"] = JsonSerializer.SerializeToElement(IsChinese ? "zh" : "en");
                 File.WriteAllText(GamePaths.SettingsFile,
                     JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
             }
@@ -174,7 +178,6 @@ namespace ETBTool.Utils
         public static string BtnImportMod => IsChinese ? "导入Mod" : "Import";
         public static string BtnPack => IsChinese ? "打包选中" : "Pack";
         public static string ModActions => IsChinese ? "Mod 操作" : "Mod Actions";
-        // ★ "Toggle" → "Enable/Disable"
         public static string BtnToggle => IsChinese ? "禁用/启用" : "Enable/Disable";
         public static string BtnEnable => IsChinese ? "启用选中" : "Enable";
         public static string BtnDisable => IsChinese ? "禁用选中" : "Disable";
@@ -268,8 +271,8 @@ namespace ETBTool.Utils
         public static string UpdateFound(string v) => IsChinese ? $"发现新版本 v{v}" : $"New version v{v}";
         public static string UpdateLatest => IsChinese ? "最新版本" : "Latest";
         public static string UpdateCurrent => IsChinese ? "当前版本" : "Current";
-        public static string UpdateHint => IsChinese ? "请前往下载页面获取最新版本。" : "Go to download page.";
-        public static string BtnDL => IsChinese ? "前往下载" : "Download";
+        public static string UpdateHint => IsChinese ? "点击下载并安装更新。" : "Download and install the update.";
+        public static string BtnDL => IsChinese ? "下载并安装" : "Download and install";
         public static string BtnViewLog => IsChinese ? "查看更新记录" : "Changelog";
         public static string BtnCheckUpdate => IsChinese ? "检查更新" : "Check Updates";
         public static string UpdateLogSection => IsChinese ? "更新日志" : "Changelog";
@@ -287,5 +290,156 @@ namespace ETBTool.Utils
         public static string[] ModeNames => IsChinese
             ? new[] { "浅色", "深色", "跟随系统" }
             : new[] { "Light", "Dark", "System" };
+
+        // 在线模组库
+        public static string ModLibTitle => IsChinese ? "后室模组库" : "Mod Hub";
+        public static string ModLoginBtn => IsChinese ? "登 录" : "Sign In";
+        public static string ModLoginSub => IsChinese ? "登录您的账号" : "Sign in to your account";
+        public static string ModLoginAccount => IsChinese ? "用户名 / 邮箱" : "Username / Email";
+        public static string ModLoginPassword => IsChinese ? "密码" : "Password";
+        public static string ModLoginNoAccount => IsChinese ? "没有账号？" : "No account?";
+        public static string ModLoginGoRegister => IsChinese ? "前往注册" : "Register";
+        public static string ModLoginFillAll => IsChinese ? "请填写用户名和密码" : "Enter credentials";
+        public static string ModLoginExpired => IsChinese ? "登录已过期，请重新登录" : "Session expired";
+        public static string ModLoginBanned(string r) => IsChinese ? $"您的账号已被封禁\n原因：{r}" : $"Banned\nReason: {r}";
+
+        public static string ModRegTitle => IsChinese ? "注册账号" : "Create Account";
+        public static string ModRegEmail => IsChinese ? "邮箱" : "Email";
+        public static string ModRegCode => IsChinese ? "验证码" : "Code";
+        public static string ModRegUsername => IsChinese ? "用户名" : "Username";
+        public static string ModRegPassword => IsChinese ? "密码" : "Password";
+        public static string ModRegSendCode => IsChinese ? "发送" : "Send";
+        public static string ModRegBtn => IsChinese ? "注 册" : "Register";
+        public static string ModRegHasAccount => IsChinese ? "已有账号？" : "Have account?";
+        public static string ModRegGoLogin => IsChinese ? "前往登录" : "Sign In";
+        public static string ModRegSuccess => IsChinese ? "注册成功，请登录" : "Registered!";
+        public static string ModRegFillAll => IsChinese ? "请填写所有字段" : "Fill all fields";
+
+        public static string ModBrowseAll => IsChinese ? "全部" : "All";
+        public static string ModBrowseMod => IsChinese ? "模组" : "Mods";
+        public static string ModBrowseTool => IsChinese ? "工具" : "Tools";
+        public static string ModBrowseOther => IsChinese ? "其他" : "Other";
+        public static string ModBrowseSearch => IsChinese ? "搜索" : "Search";
+        public static string ModBrowseLoading => IsChinese ? "正在加载模组列表..." : "Loading mods...";
+        public static string ModBrowsePrev => IsChinese ? "上一页" : "Prev";
+        public static string ModBrowseNext => IsChinese ? "下一页" : "Next";
+        public static string ModBrowseEmpty => IsChinese ? "暂无模组" : "No mods";
+        public static string ModBrowseLogout => IsChinese ? "退出" : "Sign Out";
+        public static string ModStatsText(int u, int m, int t) => IsChinese ? $"{u} 注册用户  |  {m} 模组  |  {t} 工具" : $"{u} users  |  {m} mods  |  {t} tools";
+
+        public static string ModDetailGame => IsChinese ? "适用游戏" : "Game";
+        public static string ModDetailLang => IsChinese ? "语言" : "Language";
+        public static string ModDetailAuthor => IsChinese ? "作者" : "Author";
+        public static string ModDetailUploader => IsChinese ? "上传者" : "Uploader";
+        public static string ModDetailDate => IsChinese ? "上传日期" : "Date";
+        public static string ModDetailDownloads => IsChinese ? "下载次数" : "Downloads";
+        public static string ModDetailDesc => IsChinese ? "简介" : "Description";
+        public static string ModDetailInstructions => IsChinese ? "使用说明" : "Instructions";
+        public static string ModDetailDeps => IsChinese ? "前置模组" : "Dependencies";
+        public static string ModDetailDownload => IsChinese ? "下载模组" : "Download Mod";
+        public static string ModDetailDisabled => IsChinese ? "该模组已被禁止下载" : "Mod disabled";
+        public static string ModDetailDepWarn(string n) => IsChinese
+            ? $"该模组依赖以下前置模组，请确认您已安装：\n\n{n}\n\n未安装前置可能导致游戏崩溃或模组失效。是否继续下载？"
+            : $"This mod requires the following dependencies:\n\n{n}\n\nMissing dependencies may cause crashes. Continue?";
+
+        public static string ModDlPreparing => IsChinese ? "准备下载..." : "Preparing...";
+        public static string ModDlPreDownloading => IsChinese ? "正在下载..." : "Downloading...";
+        public static string ModDlExtracting => IsChinese ? "正在解压安装到 Mod 目录..." : "Extracting...";
+        public static string ModDlChecking => IsChinese ? "正在检查下载内容..." : "Checking download...";
+        public static string ModDlInstalled => IsChinese ? "安装完成！已安装到 LogicMods" : "Installed to LogicMods!";
+        public static string ModDlFailed => IsChinese ? "下载失败" : "Download failed";
+        public static string ModDlCancelled => IsChinese ? "下载已取消" : "Cancelled";
+        public static string ModDlNetworkError(string m) => IsChinese ? $"网络错误：{m}" : $"Network error: {m}";
+        public static string ModDlAlready => IsChinese ? "该模组正在下载中" : "Already downloading";
+        public static string ModDlActiveTasks => IsChinese ? "下载任务" : "Downloads";
+        public static string ModDlClearAll => IsChinese ? "清空任务" : "Clear All";
+        public static string ModDlSaved => IsChinese ? "已保存" : "Saved";
+        public static string ModDlPreNoticeTitle => IsChinese ? "下载说明" : "Download Notice";
+        public static string ModDlDontShow => IsChinese ? "不再提醒" : "Don't show again";
+        public static string ModDlViewDep => IsChinese ? "查看" : "View";
+        public static string ModDlIsModPrompt => IsChinese
+            ? "下载将先暂存到临时目录，完成后您可以选择自动安装到 Paks\\LogicMods 或手动选择保存位置。"
+            : "The file will be cached first, then you can install to Paks\\LogicMods or save elsewhere.";
+        public static string ModDlInstallAsk => IsChinese
+            ? "下载完成，是否自动安装到 Paks\\LogicMods？\n\n选择「是」自动安装，选择「否」手动选择保存位置。"
+            : "Download complete. Install to Paks\\LogicMods?\n\nYes = auto-install, No = save as...";
+
+        public static string ModDlAboutTitle => IsChinese ? "关于下载 Mod" : "About Mod Downloads";
+        public static string ModDlAboutText => IsChinese
+            ? "模组资源由「后室模组库」提供托管与分发服务。\n\n您的账号信息存储于后室模组库服务器，在本工具中注册的账号可直接登录官版模组库，反之亦然。\n\n最新公告与动态请前往官版模组库查看。"
+            : "Mods hosted by Backrooms Mod Hub.\n\nYour account works on both this tool and the official site.\n\nCheck the official site for latest news.";
+        public static string ModDlAboutUnderstood => IsChinese ? "我已了解" : "Got It";
+        public static string ModDlAboutOfficial => IsChinese ? "使用官版" : "Visit Official";
+        public static string ModDlForgotPwd => IsChinese
+            ? "忘记密码？请通过官方网站修改。"
+            : "Forgot password? Please change it via the official website.";
+
+        // 模组管理器
+        public static string ModMgrTitle => IsChinese ? "模组管理器" : "Mod Manager";
+        public static string ModMgrSub => IsChinese ? "管理已安装的模组文件、文件夹结构与启用状态" : "Manage installed mod files, folders and status";
+        public static string ModMgrPath => IsChinese ? "模组目录" : "Mod Directory";
+        public static string ModMgrOpenFolder => IsChinese ? "打开" : "Open";
+        public static string ModMgrCopyPath => IsChinese ? "复制" : "Copy";
+        public static string ModMgrList => IsChinese ? "模组列表" : "Mod List";
+        public static string ModMgrLoading => IsChinese ? "加载中..." : "Loading...";
+        public static string ModMgrUp => IsChinese ? "返回上级" : "Up";
+        public static string ModMgrRefresh => IsChinese ? "刷新" : "Refresh";
+        public static string ModMgrImport => IsChinese ? "导入" : "Import";
+        public static string ModMgrPack => IsChinese ? "打包" : "Pack";
+        public static string ModMgrDelete => IsChinese ? "删除" : "Delete";
+        public static string ModMgrActions => IsChinese ? "操作" : "Actions";
+        public static string ModMgrToggleEnable => IsChinese ? "启用模组" : "Enable Mod";
+        public static string ModMgrToggleDisable => IsChinese ? "禁用模组" : "Disable Mod";
+        public static string ModMgrNickDesc => IsChinese ? "为当前选中的模组设置别名，方便识别" : "Set a nickname for the selected mod for easier identification";
+        public static string ModMgrNickBtn => IsChinese ? "设置别名" : "Set Nickname";
+        public static string ModMgrHStatus => IsChinese ? "状态" : "Status";
+        public static string ModMgrHName => IsChinese ? "名称" : "Name";
+        public static string ModMgrHFile => IsChinese ? "文件" : "File";
+        public static string ModMgrHSize => IsChinese ? "大小" : "Size";
+        public static string ModMgrHMod => IsChinese ? "修改时间" : "Modified";
+
+        public static string ModMgrDeleteConfirm(string name) => IsChinese
+            ? $"确定要删除「{name}」吗？此操作不可撤销。"
+            : $"Delete \"{name}\"? This cannot be undone.";
+        public static string ModMgrDeleteTitle => IsChinese ? "删除确认" : "Confirm Delete";
+        public static string ModMgrDeleteSuccess => IsChinese ? "已删除" : "Deleted";
+        public static string ModMgrDeleteFailed(string e) => IsChinese ? $"删除失败：{e}" : $"Delete failed: {e}";
+
+        public static string ModMgrBackupTitle => IsChinese ? "备份模组" : "Backup Mod";
+        public static string ModMgrBackupSuccess => IsChinese ? "备份成功" : "Backup created";
+        public static string ModMgrBackupFailed(string e) => IsChinese ? $"备份失败：{e}" : $"Backup failed: {e}";
+
+        public static string ModMgrRestoreTitle => IsChinese ? "恢复模组" : "Restore Mod";
+        public static string ModMgrRestoreSuccess => IsChinese ? "恢复成功" : "Mod restored";
+        public static string ModMgrRestoreFailed(string e) => IsChinese ? $"恢复失败：{e}" : $"Restore failed: {e}";
+
+        public static string ModMgrConvertTitle => IsChinese ? "转换版本" : "Convert Version";
+        public static string ModMgrConvertPrompt(string from, string to) => IsChinese
+            ? $"将模组版本从 {from} 转换为 {to}？"
+            : $"Convert from {from} to {to}?";
+        public static string ModMgrConvertSuccess(int n, string ver) => IsChinese
+            ? $"已转换 {n} 个文件为 {ver}"
+            : $"Converted {n} files to {ver}";
+        public static string ModMgrConvertNoChange => IsChinese ? "无需转换，版本已匹配" : "Already at target version";
+        public static string ModMgrConvertFailed(string e) => IsChinese ? $"转换失败：{e}" : $"Convert failed: {e}";
+
+        public static string ModMgrImportTitle => IsChinese ? "导入模组" : "Import Mod";
+        public static string ModMgrImportSuccess => IsChinese ? "导入成功" : "Imported";
+        public static string ModMgrImportFailed(string e) => IsChinese ? $"导入失败：{e}" : $"Import failed: {e}";
+        public static string ModMgrPackTitle => IsChinese ? "打包模组" : "Pack Mod";
+        public static string ModMgrPackSuccess => IsChinese ? "打包成功" : "Packed";
+        public static string ModMgrPackFailed(string e) => IsChinese ? $"打包失败：{e}" : $"Pack failed: {e}";
+        public static string ModMgrNoSelection => IsChinese ? "请先选择一个模组" : "Select a mod first";
+        public static string ModMgrToggleSuccess(bool enabled) => IsChinese
+            ? (enabled ? "已启用" : "已禁用")
+            : (enabled ? "Enabled" : "Disabled");
+        public static string ModMgrNickSuccess => IsChinese ? "别名已设置" : "Nickname set";
+
+        public static string GetCategoryDisplay(string cat) => cat switch
+        {
+            "tool" => IsChinese ? "工具" : "Tool",
+            "other" => IsChinese ? "其他" : "Other",
+            _ => IsChinese ? "模组" : "Mod"
+        };
     }
 }

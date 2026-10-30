@@ -22,61 +22,50 @@
 		</Style.Triggers>
 	</Style>
 
-	<!-- ====== 基础按钮 ====== -->
-	<Style x:Key="BaseButton" TargetType="Button">
-		<Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
-		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-		<Setter Property="BorderThickness" Value="0"/>
-		<Setter Property="Padding" Value="16,10"/>
-		<Setter Property="FontSize" Value="13"/>
-		<Setter Property="Cursor" Value="Hand"/>
-		<Setter Property="Template">
-			<Setter.Value>
-				<ControlTemplate TargetType="Button">
-					<Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8"
-                            Padding="{TemplateBinding Padding}" BorderThickness="1"
-                            BorderBrush="{DynamicResource BorderColor}">
-						<Border.RenderTransform>
-							<ScaleTransform/>
-						</Border.RenderTransform>
-						<ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-					</Border>
-					<ControlTemplate.Triggers>
-						<Trigger Property="IsMouseOver" Value="True">
-							<Setter TargetName="bd" Property="Background"
-                                    Value="{DynamicResource ButtonHoverBackground}"/>
-						</Trigger>
-						<Trigger Property="IsPressed" Value="True">
-							<Setter TargetName="bd" Property="Background"
-                                    Value="{DynamicResource AccentColor}"/>
-						</Trigger>
-					</ControlTemplate.Triggers>
-				</ControlTemplate>
-			</Setter.Value>
-		</Setter>
-		<Style.Triggers>
-			<EventTrigger RoutedEvent="MouseEnter">
-				<BeginStoryboard>
-					<Storyboard>
-						<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                         To="1.03" Duration="0:0:0.15"/>
-						<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                         To="1.03" Duration="0:0:0.15"/>
-					</Storyboard>
-				</BeginStoryboard>
-			</EventTrigger>
-			<EventTrigger RoutedEvent="MouseLeave">
-				<BeginStoryboard>
-					<Storyboard>
-						<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                         To="1.0" Duration="0:0:0.12"/>
-						<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                         To="1.0" Duration="0:0:0.12"/>
-					</Storyboard>
-				</BeginStoryboard>
-			</EventTrigger>
-		</Style.Triggers>
-	</Style>
+    <Style x:Key="KeyboardFocus" TargetType="Control">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border BorderBrush="{DynamicResource AccentColor}" BorderThickness="2" CornerRadius="6" Margin="-3"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="BaseButton" TargetType="Button">
+        <Setter Property="Background" Value="{DynamicResource ButtonBackground}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="14,8"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                            Padding="{TemplateBinding Padding}" BorderThickness="{TemplateBinding BorderThickness}"
+                            BorderBrush="{TemplateBinding BorderBrush}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.9"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 	<Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource BaseButton}">
 		<Setter Property="Background" Value="{DynamicResource AccentColor}"/>
@@ -94,17 +83,34 @@
 		<Setter Property="Background" Value="Transparent"/>
 		<Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
 		<Setter Property="FontSize" Value="14"/>
-		<Setter Property="Padding" Value="16,12"/>
-		<Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="MinHeight" Value="42"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/>
+        <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
+        <Setter Property="AutomationProperties.Name" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
 		<Setter Property="GroupName" Value="Nav"/>
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="RadioButton">
 					<Border x:Name="bd" Background="{TemplateBinding Background}"
-                            CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="4,2">
-						<ContentPresenter VerticalAlignment="Center"/>
+                            CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="0,2">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="IconColumn" Width="28"/>
+                                <ColumnDefinition x:Name="LabelColumn" Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="NavIcon" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ContentPresenter x:Name="NavLabel" Grid.Column="1" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Grid>
 					</Border>
 					<ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsNavigationExpanded, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="False">
+                            <Setter TargetName="NavLabel" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="IconColumn" Property="Width" Value="*"/>
+                            <Setter TargetName="LabelColumn" Property="Width" Value="0"/>
+                            <Setter TargetName="bd" Property="Padding" Value="8,10"/>
+                        </DataTrigger>
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="bd" Property="Background">
 								<Setter.Value>
@@ -231,8 +237,21 @@
 		<Setter Property="BorderThickness" Value="1"/>
 		<Setter Property="Padding" Value="10,8"/>
 		<Setter Property="FontSize" Value="13"/>
-		<Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentColor}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
 		<Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
 			<Trigger Property="IsFocused" Value="True">
 				<Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
 			</Trigger>
@@ -242,12 +261,63 @@
 	<!-- ====== Card ====== -->
 	<Style x:Key="Card" TargetType="Border">
 		<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
-		<Setter Property="CornerRadius" Value="12"/>
+		<Setter Property="CornerRadius" Value="8"/>
 		<Setter Property="Padding" Value="20"/>
 		<Setter Property="Margin" Value="0,0,0,12"/>
 		<Setter Property="BorderThickness" Value="1"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
 	</Style>
+
+    <Style x:Key="Section" TargetType="Border">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0,0,0,24"/>
+        <Setter Property="Margin" Value="0,0,0,24"/>
+        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+    </Style>
+
+    <Style x:Key="MusicVolumeSlider" TargetType="Slider">
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/>
+        <Setter Property="IsMoveToPointEnabled" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Slider">
+                    <Grid Background="Transparent">
+                        <Track x:Name="PART_Track" VerticalAlignment="Center">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Command="Slider.DecreaseLarge" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="4" Background="{DynamicResource AccentColor}" CornerRadius="2"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.DecreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb Width="16" Height="16">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Border Background="{DynamicResource SurfaceColor}" BorderBrush="{DynamicResource AccentColor}" BorderThickness="3" CornerRadius="8"/>
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Command="Slider.IncreaseLarge" Focusable="False">
+                                    <RepeatButton.Template>
+                                        <ControlTemplate TargetType="RepeatButton">
+                                            <Border Height="4" Background="{DynamicResource ButtonHoverBackground}" CornerRadius="2"/>
+                                        </ControlTemplate>
+                                    </RepeatButton.Template>
+                                </RepeatButton>
+                            </Track.IncreaseRepeatButton>
+                        </Track>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 	<Style x:Key="PageTitle" TargetType="TextBlock">
 		<Setter Property="FontSize" Value="24"/>

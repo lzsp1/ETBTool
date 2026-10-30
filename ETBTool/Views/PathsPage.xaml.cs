@@ -1,6 +1,3 @@
-using System;
-using System.Diagnostics;
-using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using ETBTool.Models;
@@ -60,15 +57,7 @@ namespace ETBTool.Views
             else if (s == Open2) path = Path2.Text;
             else if (s == Open3) path = Path3.Text;
             else if (s == Open4) path = Path4.Text;
-            try
-            {
-                if (!string.IsNullOrEmpty(path))
-                {
-                    if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-                    Process.Start("explorer.exe", path);
-                }
-            }
-            catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
+            ExternalLauncher.OpenFolder(path);
         }
     }
 }

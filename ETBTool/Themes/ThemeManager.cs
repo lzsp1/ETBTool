@@ -18,8 +18,8 @@ namespace ETBTool.Themes
         private static ThemeManager? _instance;
         public static ThemeManager Instance => _instance ??= new ThemeManager();
 
-        private AppThemeStyle _style = AppThemeStyle.GlassMorphism;
-        private AppColorMode _mode = AppColorMode.Dark;
+        private AppThemeStyle _style = AppThemeStyle.Minimal;
+        private AppColorMode _mode = AppColorMode.Light;
         private bool _isSystemDark;
         private string? _customAccent;
         private string? _bgImagePath;
@@ -30,9 +30,26 @@ namespace ETBTool.Themes
             "NeumorphismTheme.xaml","ThreeDTheme.xaml","NeonTheme.xaml"
         };
 
-        public AppThemeStyle CurrentStyle { get => _style; set { _style = value; OnPropertyChanged(nameof(CurrentStyle)); ApplyTheme(); } }
-        public AppColorMode CurrentMode { get => _mode; set { _mode = value; OnPropertyChanged(nameof(CurrentMode)); ApplyTheme(); } }
-        public bool IsCurrentlyDark => _mode switch { AppColorMode.Light => false, AppColorMode.Dark => true, AppColorMode.System => _isSystemDark, _ => true };
+        public AppThemeStyle CurrentStyle
+        {
+            get => _style;
+            set { _style = value; OnPropertyChanged(nameof(CurrentStyle)); ApplyTheme(); }
+        }
+
+        public AppColorMode CurrentMode
+        {
+            get => _mode;
+            set { _mode = value; OnPropertyChanged(nameof(CurrentMode)); ApplyTheme(); }
+        }
+
+        public bool IsCurrentlyDark => _mode switch
+        {
+            AppColorMode.Light => false,
+            AppColorMode.Dark => true,
+            AppColorMode.System => _isSystemDark,
+            _ => false
+        };
+
         public string[] ThemeNames => new[] { "全玻璃风格", "极简留白", "玻璃拟态", "新拟态", "3D立体风", "霓虹彩色" };
         public string[] ModeNames => new[] { "浅色", "深色", "跟随系统" };
         public string? BackgroundImagePath => _bgImagePath;
@@ -48,7 +65,11 @@ namespace ETBTool.Themes
                 if (_mode != AppColorMode.System) return;
                 var now = ReadSystemDark();
                 _isSystemDark = now;
-                Application.Current?.Dispatcher.Invoke(() => { ApplyTheme(); ThemeChanged?.Invoke(); });
+                Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    ApplyTheme();
+                    ThemeChanged?.Invoke();
+                });
             };
         }
 
@@ -56,12 +77,18 @@ namespace ETBTool.Themes
         {
             try
             {
-                if (!File.Exists(GamePaths.SettingsFile)) return;
-                var r = JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile)).RootElement;
-                if (r.TryGetProperty("ThemeStyle", out var s)) _style = Enum.Parse<AppThemeStyle>(s.GetString() ?? "GlassMorphism");
-                if (r.TryGetProperty("ColorMode", out var m)) _mode = Enum.Parse<AppColorMode>(m.GetString() ?? "Dark");
-                if (r.TryGetProperty("CustomAccent", out var ca)) _customAccent = ca.GetString();
-                if (r.TryGetProperty("BgImagePath", out var bi)) _bgImagePath = bi.GetString();
+                if (File.Exists(GamePaths.SettingsFile))
+                {
+                    var r = JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile)).RootElement;
+                    if (r.TryGetProperty("ThemeStyle", out var s))
+                        _style = Enum.Parse<AppThemeStyle>(s.GetString() ?? "Minimal");
+                    if (r.TryGetProperty("ColorMode", out var m))
+                        _mode = Enum.Parse<AppColorMode>(m.GetString() ?? "Light");
+                    if (r.TryGetProperty("CustomAccent", out var ca))
+                        _customAccent = ca.GetString();
+                    if (r.TryGetProperty("BgImagePath", out var bi))
+                        _bgImagePath = bi.GetString();
+                }
             }
             catch { }
             ApplyTheme();
@@ -71,14 +98,23 @@ namespace ETBTool.Themes
         {
             try
             {
-                var dict = new System.Collections.Generic.Dictionary<string, string>();
+                var dir = Path.GetDirectoryName(GamePaths.SettingsFile);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
+                var dict = new System.Collections.Generic.Dictionary<string, JsonElement>();
                 if (File.Exists(GamePaths.SettingsFile))
-                    foreach (var p in JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile)).RootElement.EnumerateObject())
-                        if (p.Value.ValueKind == JsonValueKind.String) dict[p.Name] = p.Value.GetString() ?? "";
-                dict["ThemeStyle"] = _style.ToString();
-                dict["ColorMode"] = _mode.ToString();
-                dict["CustomAccent"] = _customAccent ?? "";
-                dict["BgImagePath"] = _bgImagePath ?? "";
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(GamePaths.SettingsFile));
+                    foreach (var p in document.RootElement.EnumerateObject())
+                        dict[p.Name] = p.Value.Clone();
+                }
+
+                dict["ThemeStyle"] = JsonSerializer.SerializeToElement(_style.ToString());
+                dict["ColorMode"] = JsonSerializer.SerializeToElement(_mode.ToString());
+                dict["CustomAccent"] = JsonSerializer.SerializeToElement(_customAccent ?? "");
+                dict["BgImagePath"] = JsonSerializer.SerializeToElement(_bgImagePath ?? "");
+
                 File.WriteAllText(GamePaths.SettingsFile,
                     JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
             }
@@ -109,7 +145,7 @@ namespace ETBTool.Themes
                 AppThemeStyle.Neumorphism => "Themes/NeumorphismTheme.xaml",
                 AppThemeStyle.ThreeD => "Themes/ThreeDTheme.xaml",
                 AppThemeStyle.Neon => "Themes/NeonTheme.xaml",
-                _ => "Themes/GlassMorphismTheme.xaml"
+                _ => "Themes/MinimalTheme.xaml"
             };
             rd.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(uri, UriKind.Relative) });
 
@@ -125,8 +161,9 @@ namespace ETBTool.Themes
             rd["CardBackground"] = rd[$"{pre}CardBg"];
             rd["CardHoverBackground"] = rd[$"{pre}CardHover"];
             rd["SidebarBackground"] = rd[$"{pre}Sidebar"];
+            rd["HoverTintColor"] = rd[$"{pre}HoverTintColor"];
 
-            // ★ 强调色处理
+            // 强调色处理
             if (!string.IsNullOrWhiteSpace(_customAccent))
             {
                 try
@@ -138,7 +175,6 @@ namespace ETBTool.Themes
             }
             else
             {
-                // ★ 移除直接覆盖，让主题字典中的默认强调色生效
                 rd.Remove("AccentColor");
             }
 
@@ -172,7 +208,12 @@ namespace ETBTool.Themes
 
         private bool ReadSystemDark()
         {
-            try { using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"); return k?.GetValue("AppsUseLightTheme") is int v && v == 0; } catch { return true; }
+            try
+            {
+                using var k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+                return k?.GetValue("AppsUseLightTheme") is int v && v == 0;
+            }
+            catch { return true; }
         }
 
         protected void OnPropertyChanged(string n) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));

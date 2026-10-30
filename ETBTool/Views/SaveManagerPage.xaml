@@ -37,7 +37,8 @@
 						<TextBlock x:Name="HMod"  Grid.Column="3" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 					</Grid>
 					<Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,4"/>
-					<ListBox x:Name="FileListBox" Height="280" Margin="0,0,0,12" SelectionMode="Extended" ItemContainerStyle="{StaticResource TableListBoxItem}">
+					<TextBlock x:Name="EmptyState" Text="没有存档文件" Style="{StaticResource MutedText}" Margin="4,12" TextWrapping="Wrap"/>
+					<ListBox x:Name="FileListBox" Height="280" Margin="0,0,0,12" SelectionMode="Extended" MouseDoubleClick="Item_DblClick" ItemContainerStyle="{StaticResource TableListBoxItem}">
 						<ListBox.ItemTemplate>
 							<DataTemplate>
 								<Grid>
@@ -50,7 +51,7 @@
 									<Border CornerRadius="4" Padding="6,2" Margin="0,0,10,0" HorizontalAlignment="Left" Background="{Binding DiffColor}">
 										<TextBlock Text="{Binding Difficulty}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
 									</Border>
-									<TextBlock Grid.Column="1" Text="{Binding SaveName}" Style="{StaticResource ListPrimaryText}"/>
+									<TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource ListPrimaryText}"/>
 									<TextBlock Grid.Column="2" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
 									<TextBlock Grid.Column="3" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
 								</Grid>

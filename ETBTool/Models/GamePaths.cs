@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -17,22 +18,23 @@ namespace ETBTool.Models
         public static string LogFilePath => Path.Combine(AppConfigPath, "operation.log");
         public static string SettingsFile => Path.Combine(AppConfigPath, "settings.json");
 
-        public static string ModNamesUrl =>
-            "https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json";
-        public static string UpdateCheckUrl =>
-            "https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/version.json";
-        public static string UpdateDownloadUrl =>
-            "https://github.com/lzsp1/ETBTool/releases";
-        public static string ModDownloadUrl =>
-            "https://etbtoolmod.xn--online-o20ki81q.top/";
+        public const string CatalogueUrl = "https://backroomsmod.xn--online-o20ki81q.top";
+        public static string ApiUrl(string route)
+        {
+            var parts = route.TrimStart('/').Split('?', 2);
+            return CatalogueUrl + "/api/index.php?route=" + Uri.EscapeDataString(parts[0]) +
+                (parts.Length > 1 ? "&" + parts[1] : "");
+        }
+        public static string ModNamesUrl => ApiUrl("mod-nicknames");
+        public static string UpdateCheckUrl => ApiUrl("etb/latest");
+        public static string UpdateDownloadUrl => CatalogueUrl + "/#/tools";
+        public const string ReleaseHistoryUrl = "https://github.com/lzsp1/ETBTool/releases";
+        public static string ModDownloadUrl => CatalogueUrl + "/";
         public static string OfficialWebsite =>
             "https://taolihoushiwanyouqun.wordpress.com/";
         public static string SourceCodeUrl =>
             "https://github.com/lzsp1/ETBTool";
-        public static string NicknameSubmitUrl =>
-            "https://github.com/lzsp1/ETBTool/issues";
-
-        public const string DisplayVersion = "0.0.03";
+        public const string DisplayVersion = "26.10.301";
         public const string SteamAppId = "1943950";
 
         public static string SteamGameUri => $"steam://rungameid/{SteamAppId}";
@@ -164,15 +166,16 @@ namespace ETBTool.Models
         {
             try
             {
-                var dict = new Dictionary<string, string>();
+                var dict = new Dictionary<string, JsonElement>();
                 if (File.Exists(SettingsFile))
-                    foreach (var p in JsonDocument.Parse(File.ReadAllText(SettingsFile))
-                        .RootElement.EnumerateObject())
-                        if (p.Value.ValueKind == JsonValueKind.String)
-                            dict[p.Name] = p.Value.GetString() ?? "";
-                dict["CustomSavePath"] = _customSavePath ?? "";
-                dict["CustomCrashPath"] = _customCrashPath ?? "";
-                dict["CustomGamePath"] = _customGamePath ?? "";
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(SettingsFile));
+                    foreach (var p in document.RootElement.EnumerateObject())
+                        dict[p.Name] = p.Value.Clone();
+                }
+                dict["CustomSavePath"] = JsonSerializer.SerializeToElement(_customSavePath ?? "");
+                dict["CustomCrashPath"] = JsonSerializer.SerializeToElement(_customCrashPath ?? "");
+                dict["CustomGamePath"] = JsonSerializer.SerializeToElement(_customGamePath ?? "");
                 File.WriteAllText(SettingsFile,
                     JsonSerializer.Serialize(dict,
                         new JsonSerializerOptions { WriteIndented = true }));

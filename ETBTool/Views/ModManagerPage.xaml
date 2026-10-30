@@ -2,6 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:etb="clr-namespace:ETBTool.Utils" Background="Transparent" etb:ScrollBubble.Enabled="True">
+
+
 	<ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
 		<StackPanel>
 			<TextBlock x:Name="PageTitle" Style="{StaticResource PageTitle}"/>
@@ -28,13 +30,13 @@
 						<TextBlock x:Name="LoadingHint" Style="{StaticResource MutedText}" VerticalAlignment="Center" Visibility="Collapsed"/>
 						<TextBlock x:Name="CurrentDirText" Style="{StaticResource MutedText}" VerticalAlignment="Center" Margin="12,0,0,0"/>
 					</StackPanel>
-					<Grid Margin="0,0,0,4">
+					<Grid>
 						<Grid.ColumnDefinitions>
 							<ColumnDefinition Width="60"/>
 							<ColumnDefinition Width="*"/>
-							<ColumnDefinition Width="160"/>
-							<ColumnDefinition Width="120"/>
-							<ColumnDefinition Width="160"/>
+							<ColumnDefinition Width="140"/>
+							<ColumnDefinition Width="100"/>
+							<ColumnDefinition Width="140"/>
 						</Grid.ColumnDefinitions>
 						<TextBlock x:Name="HStatus" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 						<TextBlock x:Name="HName"   Grid.Column="1" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
@@ -43,22 +45,26 @@
 						<TextBlock x:Name="HMod"    Grid.Column="4" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 					</Grid>
 					<Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,4"/>
-					<ListBox x:Name="ModListBox" Height="260" Margin="0,0,0,12" SelectionMode="Extended" SelectionChanged="ModSel" MouseDoubleClick="ModDblClick" ItemContainerStyle="{StaticResource TableListBoxItem}">
+					<ListBox x:Name="ModListBox" Height="280" Margin="0,0,0,12"
+                             SelectionMode="Extended" SelectionChanged="ModSel" MouseDoubleClick="ModDblClick"
+                             ItemContainerStyle="{StaticResource TableListBoxItem}"
+                             HorizontalContentAlignment="Stretch"
+                             ScrollViewer.CanContentScroll="False">
 						<ListBox.ItemTemplate>
 							<DataTemplate>
 								<Grid>
 									<Grid.ColumnDefinitions>
 										<ColumnDefinition Width="60"/>
 										<ColumnDefinition Width="*"/>
-										<ColumnDefinition Width="160"/>
-										<ColumnDefinition Width="120"/>
-										<ColumnDefinition Width="160"/>
+										<ColumnDefinition Width="140"/>
+										<ColumnDefinition Width="100"/>
+										<ColumnDefinition Width="140"/>
 									</Grid.ColumnDefinitions>
 									<Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" Background="{Binding StatusColor}">
 										<TextBlock Text="{Binding Status}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
 									</Border>
-									<TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource ListPrimaryText}"/>
-									<TextBlock Grid.Column="2" Text="{Binding FileName}" Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="1" Text="{Binding DisplayName}" Style="{StaticResource ListPrimaryText}" TextTrimming="CharacterEllipsis"/>
+									<TextBlock Grid.Column="2" Text="{Binding FileName}" Style="{StaticResource ListSecondaryText}" TextTrimming="CharacterEllipsis"/>
 									<TextBlock Grid.Column="3" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
 									<TextBlock Grid.Column="4" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
 								</Grid>
@@ -78,8 +84,7 @@
 				<StackPanel>
 					<TextBlock x:Name="LblActions" Style="{StaticResource SectionTitle}"/>
 					<Button x:Name="ToggleBtn" Style="{StaticResource BaseButton}" Click="Toggle" HorizontalAlignment="Left" Margin="0,0,0,12"/>
-					<TextBlock x:Name="NickDesc" Foreground="{DynamicResource TextPrimary}"/>
-					<Button x:Name="BtnNick" Style="{StaticResource AccentButton}" Click="SubmitNick" Margin="0,8,0,0" HorizontalAlignment="Left"/>
+					<TextBlock x:Name="TranslationState" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
 				</StackPanel>
 			</Border>
 		</StackPanel>

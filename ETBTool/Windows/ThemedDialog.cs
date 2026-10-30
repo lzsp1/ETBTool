@@ -1,5 +1,7 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using ETBTool.Utils;
@@ -8,125 +10,193 @@ namespace ETBTool.Windows
 {
     public static class ThemedDialog
     {
-        public static MessageBoxResult Show(Window owner, string message, string title = "", MessageBoxButton buttons = MessageBoxButton.OK)
+        public static MessageBoxResult Show(Window? owner, string message, string title, MessageBoxButton buttons = MessageBoxButton.OK,
+            string? primaryLabel = null, string? secondaryLabel = null)
         {
-            var result = MessageBoxResult.None;
-
-            var win = new Window
+            try
             {
-                Width = 440,
+                var result = MessageBoxResult.None;
+                var dlg = CreateDialog(owner, title);
+                var accent = TryGetBrush("AccentColor", "#6C5CE7");
+                var bg = TryGetBrush("CardBackground", "#1a1a1a");
+                var fg = TryGetBrush("TextPrimary", "#f0ece4");
+                var fgSec = TryGetBrush("TextSecondary", "#7a7570");
+                var borderColor = TryGetBrush("BorderColor", "#333");
+                var btnBg = TryGetBrush("ButtonBackground", "#2a2a2a");
+
+                var outerBorder = new Border
+                {
+                    CornerRadius = new CornerRadius(12),
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = borderColor,
+                    Background = bg,
+                    Effect = new DropShadowEffect { BlurRadius = 20, ShadowDepth = 0, Opacity = 0.3, Color = Colors.Black }
+                };
+
+                var stack = new StackPanel { Margin = new Thickness(28, 24, 28, 20) };
+                stack.Children.Add(new TextBlock { Text = title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = fg, Margin = new Thickness(0, 0, 0, 10) });
+                stack.Children.Add(new ScrollViewer
+                {
+                    MaxHeight = Math.Max(120, SystemParameters.WorkArea.Height - 240),
+                    VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                    Margin = new Thickness(0, 0, 0, 20),
+                    Content = new TextBlock { Text = message, FontSize = 13, Foreground = fgSec, TextWrapping = TextWrapping.Wrap, LineHeight = 22 }
+                });
+                dlg.PreviewKeyDown += (_, e) =>
+                {
+                    if (e.Key == Key.Escape) { result = MessageBoxResult.Cancel; e.Handled = true; dlg.Close(); }
+                };
+
+                var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+
+                Button MakeBtn(string text, bool primary, MessageBoxResult r)
+                {
+                    var btn = new Button
+                    {
+                        Content = text,
+                        FontSize = 13,
+                        FontWeight = FontWeights.SemiBold,
+                        Padding = new Thickness(20, 8, 20, 8),
+                        Margin = new Thickness(8, 0, 0, 0),
+                        Cursor = Cursors.Hand,
+                        BorderThickness = new Thickness(0),
+                        Background = primary ? accent : btnBg,
+                        Foreground = primary ? Brushes.White : fg
+                    };
+                    btn.Click += (_, _) => { result = r; dlg.Close(); };
+                    return btn;
+                }
+
+                switch (buttons)
+                {
+                    case MessageBoxButton.OK:
+                        btnPanel.Children.Add(MakeBtn(primaryLabel ?? LanguageManager.BtnConfirm, true, MessageBoxResult.OK));
+                        break;
+                    case MessageBoxButton.OKCancel:
+                        btnPanel.Children.Add(MakeBtn(primaryLabel ?? LanguageManager.BtnConfirm, true, MessageBoxResult.OK));
+                        btnPanel.Children.Add(MakeBtn(secondaryLabel ?? LanguageManager.BtnCancel, false, MessageBoxResult.Cancel));
+                        break;
+                    case MessageBoxButton.YesNo:
+                        btnPanel.Children.Add(MakeBtn(primaryLabel ?? LanguageManager.BtnYes, true, MessageBoxResult.Yes));
+                        btnPanel.Children.Add(MakeBtn(secondaryLabel ?? LanguageManager.BtnNo, false, MessageBoxResult.No));
+                        break;
+                    case MessageBoxButton.YesNoCancel:
+                        btnPanel.Children.Add(MakeBtn(primaryLabel ?? LanguageManager.BtnYes, true, MessageBoxResult.Yes));
+                        btnPanel.Children.Add(MakeBtn(secondaryLabel ?? LanguageManager.BtnNo, false, MessageBoxResult.No));
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnCancel, false, MessageBoxResult.Cancel));
+                        break;
+                }
+
+                stack.Children.Add(btnPanel);
+                outerBorder.Child = stack;
+                dlg.Content = outerBorder;
+                dlg.ShowDialog();
+                return result;
+            }
+            catch { return MessageBox.Show(message, title, buttons); }
+        }
+
+        public static (MessageBoxResult result, bool isChecked) ShowCheckbox(
+            Window? owner, string message, string title, string checkboxLabel,
+            MessageBoxButton buttons = MessageBoxButton.OK)
+        {
+            try
+            {
+                var result = MessageBoxResult.None;
+                var dlg = CreateDialog(owner, title);
+                var accent = TryGetBrush("AccentColor", "#6C5CE7");
+                var bg = TryGetBrush("CardBackground", "#1a1a1a");
+                var fg = TryGetBrush("TextPrimary", "#f0ece4");
+                var fgSec = TryGetBrush("TextSecondary", "#7a7570");
+                var borderColor = TryGetBrush("BorderColor", "#333");
+                var btnBg = TryGetBrush("ButtonBackground", "#2a2a2a");
+
+                var outerBorder = new Border
+                {
+                    CornerRadius = new CornerRadius(12),
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = borderColor,
+                    Background = bg,
+                    Effect = new DropShadowEffect { BlurRadius = 20, ShadowDepth = 0, Opacity = 0.3, Color = Colors.Black }
+                };
+
+                var stack = new StackPanel { Margin = new Thickness(28, 24, 28, 20) };
+                stack.Children.Add(new TextBlock { Text = title, FontSize = 16, FontWeight = FontWeights.SemiBold, Foreground = fg, Margin = new Thickness(0, 0, 0, 10) });
+                stack.Children.Add(new TextBlock { Text = message, FontSize = 13, Foreground = fgSec, TextWrapping = TextWrapping.Wrap, LineHeight = 22, Margin = new Thickness(0, 0, 0, 16) });
+                var checkBox = new CheckBox { Content = checkboxLabel, FontSize = 12, Foreground = fgSec, Margin = new Thickness(0, 0, 0, 20) };
+                stack.Children.Add(checkBox);
+
+                var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+
+                Button MakeBtn(string text, bool primary, MessageBoxResult r)
+                {
+                    var btn = new Button
+                    {
+                        Content = text,
+                        FontSize = 13,
+                        FontWeight = FontWeights.SemiBold,
+                        Padding = new Thickness(20, 8, 20, 8),
+                        Margin = new Thickness(8, 0, 0, 0),
+                        Cursor = Cursors.Hand,
+                        BorderThickness = new Thickness(0),
+                        Background = primary ? accent : btnBg,
+                        Foreground = primary ? Brushes.White : fg
+                    };
+                    btn.Click += (_, _) => { result = r; dlg.Close(); };
+                    return btn;
+                }
+
+                switch (buttons)
+                {
+                    case MessageBoxButton.OK:
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnConfirm, true, MessageBoxResult.OK));
+                        break;
+                    case MessageBoxButton.OKCancel:
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnConfirm, true, MessageBoxResult.OK));
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnCancel, false, MessageBoxResult.Cancel));
+                        break;
+                    case MessageBoxButton.YesNo:
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnYes, true, MessageBoxResult.Yes));
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnNo, false, MessageBoxResult.No));
+                        break;
+                    case MessageBoxButton.YesNoCancel:
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnYes, true, MessageBoxResult.Yes));
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnNo, false, MessageBoxResult.No));
+                        btnPanel.Children.Add(MakeBtn(LanguageManager.BtnCancel, false, MessageBoxResult.Cancel));
+                        break;
+                }
+
+                stack.Children.Add(btnPanel);
+                outerBorder.Child = stack;
+                dlg.Content = outerBorder;
+                dlg.ShowDialog();
+                return (result, checkBox.IsChecked == true);
+            }
+            catch { return (MessageBox.Show(message, title, buttons), false); }
+        }
+
+        private static Window CreateDialog(Window? owner, string title)
+        {
+            return new Window
+            {
+                Title = title,
+                Width = 500,
+                MinHeight = 160,
                 SizeToContent = SizeToContent.Height,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = owner,
+                WindowStartupLocation = owner != null ? WindowStartupLocation.CenterOwner : WindowStartupLocation.CenterScreen,
                 WindowStyle = WindowStyle.None,
                 AllowsTransparency = true,
                 Background = Brushes.Transparent,
                 ResizeMode = ResizeMode.NoResize,
-                ShowInTaskbar = false
+                ShowInTaskbar = false,
+                Owner = owner
             };
+        }
 
-            var accent = (Brush)Application.Current.TryFindResource("AccentColor")
-                         ?? new SolidColorBrush(Color.FromRgb(108, 92, 231));
-            var textPrimary = (Brush)Application.Current.TryFindResource("TextPrimary") ?? Brushes.Black;
-            var buttonBg = (Brush)Application.Current.TryFindResource("ButtonBackground") ?? Brushes.LightGray;
-            var cardBg = (Brush)Application.Current.TryFindResource("CardBackground") ?? Brushes.White;
-            var borderClr = (Brush)Application.Current.TryFindResource("BorderColor") ?? Brushes.Gray;
-
-            var border = new Border
-            {
-                CornerRadius = new CornerRadius(12),
-                BorderThickness = new Thickness(1),
-                BorderBrush = borderClr,
-                Background = cardBg,
-                Padding = new Thickness(28),
-                Margin = new Thickness(8),
-                Effect = new DropShadowEffect { BlurRadius = 20, ShadowDepth = 0, Opacity = 0.3, Color = Colors.Black }
-            };
-
-            var stack = new StackPanel();
-
-            if (!string.IsNullOrEmpty(title))
-            {
-                stack.Children.Add(new TextBlock
-                {
-                    Text = title,
-                    FontSize = 18,
-                    FontWeight = FontWeights.SemiBold,
-                    Foreground = textPrimary,
-                    Margin = new Thickness(0, 0, 0, 14)
-                });
-            }
-
-            stack.Children.Add(new TextBlock
-            {
-                Text = message,
-                FontSize = 14,
-                TextWrapping = TextWrapping.Wrap,
-                Foreground = textPrimary,
-                Margin = new Thickness(0, 0, 0, 24)
-            });
-
-            var btnPanel = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right
-            };
-
-            // ★ 使用 TryFindResource 获取样式
-            Button MakeBtn(string text, MessageBoxResult r, bool isAccent)
-            {
-                var btn = new Button
-                {
-                    Content = text,
-                    MinWidth = 80,
-                    Margin = new Thickness(0, 0, 8, 0),
-                    Cursor = System.Windows.Input.Cursors.Hand
-                };
-
-                var style = Application.Current.TryFindResource(isAccent ? "AccentButton" : "BaseButton") as Style;
-                if (style != null)
-                    btn.Style = style;
-                else
-                {
-                    btn.Padding = new Thickness(20, 10, 20, 10);
-                    btn.FontSize = 13;
-                    btn.Background = isAccent ? accent : buttonBg;
-                    btn.Foreground = isAccent ? Brushes.White : textPrimary;
-                    btn.BorderThickness = new Thickness(0);
-                }
-
-                btn.Click += (_, _) => { result = r; win.Close(); };
-                return btn;
-            }
-
-            switch (buttons)
-            {
-                case MessageBoxButton.OK:
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnConfirm, MessageBoxResult.OK, true));
-                    break;
-                case MessageBoxButton.OKCancel:
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnConfirm, MessageBoxResult.OK, true));
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnCancel, MessageBoxResult.Cancel, false));
-                    break;
-                case MessageBoxButton.YesNo:
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnYes, MessageBoxResult.Yes, true));
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnNo, MessageBoxResult.No, false));
-                    break;
-                case MessageBoxButton.YesNoCancel:
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnYes, MessageBoxResult.Yes, true));
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnNo, MessageBoxResult.No, false));
-                    btnPanel.Children.Add(MakeBtn(LanguageManager.BtnCancel, MessageBoxResult.Cancel, false));
-                    break;
-            }
-
-            stack.Children.Add(btnPanel);
-            border.Child = stack;
-            win.Content = border;
-
-            border.MouseLeftButtonDown += (_, _) => { try { win.DragMove(); } catch { } };
-
-            win.ShowDialog();
-            return result;
+        private static SolidColorBrush TryGetBrush(string key, string fallback)
+        {
+            try { var val = Application.Current?.TryFindResource(key); if (val is SolidColorBrush b) return b; } catch { }
+            return new SolidColorBrush((Color)ColorConverter.ConvertFromString(fallback));
         }
     }
 }

@@ -53,20 +53,14 @@ namespace ETBTool.Views
         {
             var idx = ItemListBox.SelectedIndex; if (idx < 0) return; var off = GetOffset(); if (off == 1 && idx == 0) { GoUp(s, new RoutedEventArgs()); return; }
             var realIdx = idx - off; if (realIdx >= 0 && realIdx < _dirs.Length) NavigateTo(_dirs[realIdx]);
-            else { var fi = realIdx - _dirs.Length; if (fi >= 0 && fi < _files.Length) try { Process.Start("explorer.exe", $"/select,\"{_files[fi]}\""); } catch { } }
+            else { var fi = realIdx - _dirs.Length; if (fi >= 0 && fi < _files.Length) ExternalLauncher.SelectFile(_files[fi]); }
         }
 
         private void GoUp(object s, RoutedEventArgs e) { var p = Directory.GetParent(_currentDir); if (p != null && _currentDir != _rootDir) NavigateTo(p.FullName); }
 
         private void OpenRoot(object s, RoutedEventArgs e)
         {
-            var answer = ThemedDialog.Show(Window.GetWindow(this), LanguageManager.TipOpenPath, LanguageManager.IsChinese ? "提示" : "Tip", MessageBoxButton.OKCancel);
-            if (answer != MessageBoxResult.OK) return; try
-            {
-                bool ok = Logger.SafeSetClipboard(_rootDir); Toast.Show(ok ? LanguageManager.MsgCopied : LanguageManager.MsgCopyFail, ok ? ToastType.Success : ToastType.Warning);
-                Process.Start("explorer.exe", Environment.GetFolderPath(Environment.SpecialFolder.MyComputer));
-            }
-            catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
+            ExternalLauncher.OpenFolder(_rootDir);
         }
 
         private void CopyRoot(object s, RoutedEventArgs e) { bool ok = Logger.SafeSetClipboard(_rootDir); Toast.Show(ok ? LanguageManager.MsgCopied : LanguageManager.MsgCopyFail, ok ? ToastType.Success : ToastType.Error); }

@@ -1,153 +1,462 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
+using System.Windows.Media;
 using ETBTool.Models;
+using ETBTool.Services;
 using ETBTool.Utils;
 using ETBTool.Windows;
 using Microsoft.Win32;
 
 namespace ETBTool.Views
 {
-    public class ModItem { public string Status { get; set; } = ""; public string StatusColor { get; set; } = "#888"; public string DisplayName { get; set; } = ""; public string FileName { get; set; } = ""; public string Size { get; set; } = ""; public string Modified { get; set; } = ""; public string FilePath { get; set; } = ""; }
+    public class ModEntry : INotifyPropertyChanged
+    {
+        public string DisplayName { get; set; } = "";
+        public string FileName { get; set; } = "";
+        public string Size { get; set; } = "";
+        public string Modified { get; set; } = "";
+        public string Status { get; set; } = "";
+
+        // WPF Brush 是 Freezable/DependencyObject，不能在 Task.Run 线程创建后直接绑定到 UI。
+        // 使用已冻结的 Brush，可安全地跨线程读取。
+        private static readonly Brush EnabledStatusBrush = CreateStatusBrush(40, 167, 69);
+        private static readonly Brush DisabledStatusBrush = CreateStatusBrush(220, 53, 69);
+
+        public Brush StatusColor { get; set; } = Brushes.Gray;
+
+        private static Brush CreateStatusBrush(byte r, byte g, byte b)
+        {
+            var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+            brush.Freeze();
+            return brush;
+        }
+
+        public static Brush GetStatusBrush(bool disabled) =>
+            disabled ? DisabledStatusBrush : EnabledStatusBrush;
+
+        public string FullPath { get; set; } = "";
+        public bool IsDirectory { get; set; }
+        public bool IsEnabled { get; set; } = true;
+        public event PropertyChangedEventHandler? PropertyChanged;
+        public void OnChanged(string? n = null) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n));
+    }
 
     public partial class ModManagerPage : Page
     {
-        private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15), DefaultRequestHeaders = { { "User-Agent", "ETBTool/0.0.02" } } };
-        private static readonly string FilteredFile = "EscapeTheBackrooms-WindowsNoEditor.pak";
-        private string _rootDir = "", _currentDir = "";
-        private string[] _dirs = Array.Empty<string>();
-        private ModItem[] _modItems = Array.Empty<ModItem>();
-        private Dictionary<string, string> _trans = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ObservableCollection<ModEntry> _entries = new();
+        private readonly ModTranslationService _translation = new();
+        private string _currentDir = "";
+        private int _loadGeneration;
+        private bool _operating;
 
         public ModManagerPage()
         {
-            InitializeComponent(); LanguageManager.LanguageChanged += RefreshText; _rootDir = GamePaths.ModPath; ModPathBox.Text = _rootDir; NavigateTo(_rootDir);
-            if (LanguageManager.IsChinese) _ = LoadTransAsync(); else LoadItems(); RefreshText();
+            try
+            {
+                Logger.Log("ModManagerPage: ctor start");
+
+                InitializeComponent();
+                Logger.Log("ModManagerPage: InitializeComponent OK");
+
+                ModListBox.ItemsSource = _entries;
+                Logger.Log("ModManagerPage: ItemsSource OK");
+
+                LanguageManager.LanguageChanged += RefreshText;
+                _translation.TranslationsChanged += OnTranslationsChanged;
+                Unloaded += (_, _) =>
+                {
+                    LanguageManager.LanguageChanged -= RefreshText;
+                    _translation.TranslationsChanged -= OnTranslationsChanged;
+                    _translation.Dispose();
+                };
+
+                RefreshText();
+                Logger.Log("ModManagerPage: RefreshText OK");
+
+                try
+                {
+                    _currentDir = GamePaths.ModPath ?? "";
+                    Logger.Log($"ModManagerPage: ModPath = {_currentDir}");
+                }
+                catch (Exception ex)
+                {
+                    _currentDir = "";
+                    Logger.Log($"ModManagerPage: GamePaths.ModPath failed: {ex.Message}");
+                }
+
+                if (ModPathBox != null) ModPathBox.Text = _currentDir;
+
+                Loaded += async (_, _) =>
+                {
+                    try
+                    {
+                        Logger.Log("ModManagerPage: Loaded start");
+                        var translations = _translation.LoadAsync();
+                        await LoadDirectoryAsync(_currentDir);
+                        await translations;
+                        Logger.Log("ModManagerPage: Translation loaded OK");
+                        Logger.Log("ModManagerPage: Directory loaded OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Log($"ModManagerPage: Loaded FAILED: {ex}");
+                        try
+                        {
+                            ThemedDialog.Show(Window.GetWindow(this),
+                                $"Mod Manager Error:\n\n{ex.Message}\n\n{ex.StackTrace}",
+                                "Error");
+                        }
+                        catch { }
+                    }
+                };
+
+                Logger.Log("ModManagerPage: ctor end OK");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"ModManagerPage: ctor CRASH: {ex}");
+                try
+                {
+                    var msg = $"ModManagerPage 构造崩溃：\n\n{ex.Message}\n\n{ex.GetType().Name}\n\n{ex.StackTrace}";
+                    MessageBox.Show(msg, "CRASH", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    var logDir = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "ETBTool");
+                    Directory.CreateDirectory(logDir);
+                    File.WriteAllText(
+                        Path.Combine(logDir, "modmanager_crash.txt"),
+                        $"[{DateTime.Now}]\n{ex}");
+                }
+                catch { }
+            }
+        }
+
+        // ★ 翻译更新后刷新已有条目
+        private void OnTranslationsChanged()
+        {
+            try
+            {
+                TranslationState.Text = _translation.StatusMessage;
+                foreach (var entry in _entries)
+                {
+                    {
+                        var trans = _translation.GetTranslation(entry.FileName);
+                        entry.DisplayName = trans ?? entry.FileName;
+                        entry.OnChanged(nameof(entry.DisplayName));
+                    }
+                }
+            }
+            catch { }
         }
 
         private void RefreshText()
         {
-            PageTitle.Text = LanguageManager.ModTitle; PageSub.Text = LanguageManager.ModSub; LblPath.Text = LanguageManager.ModPath;
-            LblList.Text = LanguageManager.ModList; LoadingHint.Text = LanguageManager.ModLoading;
-            BtnOpen.Content = LanguageManager.BtnOpen; BtnCopy.Content = LanguageManager.BtnCopy;
-            HStatus.Text = LanguageManager.ColStatus; HName.Text = LanguageManager.ColName; HFile.Text = LanguageManager.ColFile; HSize.Text = LanguageManager.ColSize; HMod.Text = LanguageManager.ColModified;
-            BtnUp.Content = LanguageManager.BtnUpDir; BtnRefresh.Content = LanguageManager.BtnRefresh;
-            BtnImport.Content = LanguageManager.BtnImportMod; BtnPack.Content = LanguageManager.BtnPack; BtnDel.Content = LanguageManager.BtnDelete;
-            LblActions.Text = LanguageManager.ModActions; ToggleBtn.Content = LanguageManager.BtnToggle;
-            NickDesc.Text = LanguageManager.ModNickDesc; BtnNick.Content = LanguageManager.BtnSubmitNick;
-        }
-
-        private void NavigateTo(string path) { _currentDir = path; CurrentDirText.Text = path; LoadItems(); }
-
-        private static bool IsModFile(string fileName) { var name = fileName; if (name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)) name = Path.GetFileNameWithoutExtension(name); var ext = Path.GetExtension(name).ToLowerInvariant(); return (ext == ".pak" || ext == ".utoc") && !Path.GetFileName(name).Equals(FilteredFile, StringComparison.OrdinalIgnoreCase); }
-        private static string GetBaseName(string fileName) { if (fileName.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)) return Path.GetFileNameWithoutExtension(fileName); return fileName; }
-
-        private void LoadItems()
-        {
-            ModListBox.Items.Clear(); try
+            try
             {
-                if (!Directory.Exists(_currentDir)) { _dirs = Array.Empty<string>(); _modItems = Array.Empty<ModItem>(); return; }
-                _dirs = Directory.GetDirectories(_currentDir).OrderBy(d => d).ToArray();
-                var rawFiles = Directory.GetFiles(_currentDir).Where(f => IsModFile(Path.GetFileName(f))).OrderBy(f => f).ToArray();
-                bool showUp = _currentDir != _rootDir && Directory.GetParent(_currentDir) != null;
-                if (showUp) ModListBox.Items.Add(new ModItem { Status = LanguageManager.ColFolder, StatusColor = "#3498DB", DisplayName = LanguageManager.MsgUpDir, FileName = "-", Size = "-", Modified = "-" });
-                foreach (var d in _dirs) { var i = new DirectoryInfo(d); ModListBox.Items.Add(new ModItem { Status = LanguageManager.ColFolder, StatusColor = "#3498DB", DisplayName = i.Name, FileName = "-", Size = "-", Modified = i.LastWriteTime.ToString("yyyy-MM-dd HH:mm") }); }
-                _modItems = rawFiles.Select(f => {
-                    var fi = new FileInfo(f); bool disabled = fi.Name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase); var baseName = GetBaseName(fi.Name);
-                    var dn = LanguageManager.IsChinese ? (_trans.TryGetValue(baseName, out var t) ? t : baseName) : baseName;
-                    return new ModItem { Status = disabled ? "OFF" : "ON", StatusColor = disabled ? "#E74C3C" : "#2ECC71", DisplayName = dn, FileName = baseName, Size = $"{fi.Length / 1024.0:F1} KB", Modified = fi.LastWriteTime.ToString("yyyy-MM-dd HH:mm"), FilePath = f };
-                }).ToArray();
-                foreach (var item in _modItems) ModListBox.Items.Add(item);
+                if (PageTitle != null) PageTitle.Text = LanguageManager.ModMgrTitle;
+                if (PageSub != null) PageSub.Text = LanguageManager.ModMgrSub;
+                if (LblPath != null) LblPath.Text = LanguageManager.ModMgrPath;
+                if (BtnOpen != null) BtnOpen.Content = LanguageManager.ModMgrOpenFolder;
+                if (BtnCopy != null) BtnCopy.Content = LanguageManager.ModMgrCopyPath;
+                if (LblList != null) LblList.Text = LanguageManager.ModMgrList;
+                if (LoadingHint != null) LoadingHint.Text = LanguageManager.ModMgrLoading;
+                if (HStatus != null) HStatus.Text = LanguageManager.ModMgrHStatus;
+                if (HName != null) HName.Text = LanguageManager.ModMgrHName;
+                if (HFile != null) HFile.Text = LanguageManager.ModMgrHFile;
+                if (HSize != null) HSize.Text = LanguageManager.ModMgrHSize;
+                if (HMod != null) HMod.Text = LanguageManager.ModMgrHMod;
+                if (BtnUp != null) BtnUp.Content = LanguageManager.ModMgrUp;
+                if (BtnRefresh != null) BtnRefresh.Content = LanguageManager.ModMgrRefresh;
+                if (BtnImport != null) BtnImport.Content = LanguageManager.ModMgrImport;
+                if (BtnPack != null) BtnPack.Content = LanguageManager.ModMgrPack;
+                if (BtnDel != null) BtnDel.Content = LanguageManager.ModMgrDelete;
+                if (LblActions != null) LblActions.Text = LanguageManager.ModMgrActions;
+                UpdateToggleBtn();
+                TranslationState.Text = _translation.StatusMessage;
             }
-            catch (Exception ex) { Logger.Log(ex.Message); }
+            catch (Exception ex) { Logger.Log($"RefreshText: {ex.Message}"); }
         }
 
-        private int GetDirOffset() => (_currentDir != _rootDir && Directory.GetParent(_currentDir) != null) ? 1 : 0;
-        private ModItem[] GetSelectedMods() { var r = new List<ModItem>(); foreach (var o in ModListBox.SelectedItems) if (o is ModItem mi && !string.IsNullOrEmpty(mi.FilePath)) r.Add(mi); return r.ToArray(); }
-
-        private async Task LoadTransAsync()
+        private void UpdateToggleBtn()
         {
-            Dispatcher.Invoke(() => LoadingHint.Visibility = Visibility.Visible); try
+            try
             {
-                var json = await _http.GetStringAsync(GamePaths.ModNamesUrl); var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase); var root = JsonDocument.Parse(json).RootElement;
-                if (root.ValueKind == JsonValueKind.Object) foreach (var p in root.EnumerateObject()) dict[p.Name] = p.Value.GetString() ?? "";
-                else if (root.ValueKind == JsonValueKind.Array) foreach (var item in root.EnumerateArray()) if (item.TryGetProperty("filename", out var fn) && item.TryGetProperty("name", out var cn)) dict[fn.GetString() ?? ""] = cn.GetString() ?? "";
-                _trans = dict; Logger.Log($"已加载 {_trans.Count} 条翻译");
+                if (ToggleBtn == null) return;
+                var selected = ModListBox.SelectedItems.Cast<ModEntry>().ToArray();
+                ToggleBtn.Content = selected.Length > 0 && selected.All(entry => entry.IsEnabled)
+                    ? LanguageManager.ModMgrToggleDisable
+                    : LanguageManager.ModMgrToggleEnable;
+                ToggleBtn.IsEnabled = !_operating && selected.Length > 0;
+                BtnPack.IsEnabled = !_operating && selected.Length > 0;
             }
-            catch (Exception ex) { Logger.Log(ex.Message); }
-            Dispatcher.Invoke(() => { LoadingHint.Visibility = Visibility.Collapsed; LoadItems(); });
+            catch { }
         }
 
-        private void ModDblClick(object s, MouseButtonEventArgs e)
+        private async Task LoadDirectoryAsync(string path)
         {
-            var idx = ModListBox.SelectedIndex; if (idx < 0) return; var off = GetDirOffset(); if (off == 1 && idx == 0) { GoUp(s, new RoutedEventArgs()); return; }
-            var realIdx = idx - off; if (realIdx >= 0 && realIdx < _dirs.Length) NavigateTo(_dirs[realIdx]);
-            else { if (ModListBox.SelectedItem is ModItem mi && !string.IsNullOrEmpty(mi.FilePath)) try { Process.Start("explorer.exe", $"/select,\"{mi.FilePath}\""); } catch { } }
+            var generation = ++_loadGeneration;
+            var selectedPaths = ModListBox.SelectedItems.Cast<ModEntry>().Select(entry => entry.FullPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                _entries.Clear();
+                if (LoadingHint != null) LoadingHint.Visibility = Visibility.Visible;
+                if (CurrentDirText != null) CurrentDirText.Text = path ?? "";
+
+                if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
+                {
+                    if (LoadingHint != null) LoadingHint.Visibility = Visibility.Collapsed;
+                    return;
+                }
+
+                await Task.Run(() =>
+                {
+                    var list = new List<ModEntry>();
+                    try
+                    {
+                        foreach (var dir in Directory.GetDirectories(path))
+                        {
+                            try
+                            {
+                                var info = new DirectoryInfo(dir);
+                                var disabled = info.Name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase);
+                                list.Add(new ModEntry
+                                {
+                                    DisplayName = info.Name,
+                                    FileName = ModFileOperations.DisplayFileName(info.Name),
+                                    Size = "-",
+                                    Modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"),
+                                    Status = disabled ? "OFF" : "ON",
+                                    StatusColor = ModEntry.GetStatusBrush(disabled),
+                                    FullPath = dir,
+                                    IsDirectory = true,
+                                    IsEnabled = !disabled
+                                });
+                            }
+                            catch (Exception ex) { Logger.Log($"ScanDir item: {ex.Message}"); }
+                        }
+
+                        foreach (var file in Directory.GetFiles(path))
+                        {
+                            try
+                            {
+                                var info = new FileInfo(file);
+                                if (string.Equals(info.Name, "EscapeTheBackrooms-WindowsNoEditor.pak", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+                                var disabled = info.Name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase);
+                                list.Add(new ModEntry
+                                {
+                                    DisplayName = info.Name,
+                                    FileName = ModFileOperations.DisplayFileName(info.Name),
+                                    Size = FormatSize(info.Length),
+                                    Modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm"),
+                                    Status = disabled ? "OFF" : "ON",
+                                    StatusColor = ModEntry.GetStatusBrush(disabled),
+                                    FullPath = file,
+                                    IsDirectory = false,
+                                    IsEnabled = !disabled
+                                });
+                            }
+                            catch (Exception ex) { Logger.Log($"ScanFile item: {ex.Message}"); }
+                        }
+                    }
+                    catch (Exception ex) { Logger.Log($"ScanDir: {ex.Message}"); }
+
+                    Application.Current?.Dispatcher.Invoke(() =>
+                    {
+                        if (generation != _loadGeneration) return;
+                        try
+                        {
+                            foreach (var e in list)
+                            {
+                                {
+                                    var trans = _translation.GetTranslation(e.FileName);
+                                    e.DisplayName = trans ?? e.FileName;
+                                }
+                                _entries.Add(e);
+                                if (selectedPaths.Contains(e.FullPath)) ModListBox.SelectedItems.Add(e);
+                            }
+                        }
+                        catch (Exception ex) { Logger.Log($"EntriesAdd: {ex.Message}"); }
+                    });
+                });
+            }
+            catch (Exception ex) { Logger.Log($"LoadDir: {ex.Message}"); }
+            finally
+            {
+                try { if (LoadingHint != null) LoadingHint.Visibility = Visibility.Collapsed; } catch { }
+            }
         }
-        private void GoUp(object s, RoutedEventArgs e) { var p = Directory.GetParent(_currentDir); if (p != null && _currentDir != _rootDir) NavigateTo(p.FullName); }
+
+        private static string FormatSize(long bytes) => bytes switch
+        {
+            < 1024 => $"{bytes} B",
+            < 1048576 => $"{bytes / 1024.0:F1} KB",
+            < 1073741824L => $"{bytes / 1048576.0:F1} MB",
+            _ => $"{bytes / 1073741824.0:F2} GB"
+        };
 
         private void OpenRoot(object s, RoutedEventArgs e)
         {
-            var answer = ThemedDialog.Show(Window.GetWindow(this), LanguageManager.TipOpenPath, LanguageManager.IsChinese ? "提示" : "Tip", MessageBoxButton.OKCancel);
-            if (answer != MessageBoxResult.OK) return; try
-            {
-                bool ok = Logger.SafeSetClipboard(_rootDir); Toast.Show(ok ? LanguageManager.MsgCopied : LanguageManager.MsgCopyFail, ok ? ToastType.Success : ToastType.Warning);
-                Process.Start("explorer.exe", Environment.GetFolderPath(Environment.SpecialFolder.MyComputer));
-            }
-            catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
-        }
-        private void CopyRoot(object s, RoutedEventArgs e) { bool ok = Logger.SafeSetClipboard(_rootDir); Toast.Show(ok ? LanguageManager.MsgCopied : LanguageManager.MsgCopyFail, ok ? ToastType.Success : ToastType.Error); }
-        private void Refresh(object s, RoutedEventArgs e) { if (LanguageManager.IsChinese) _ = LoadTransAsync(); else LoadItems(); Toast.Show(LanguageManager.MsgRefreshed, ToastType.Info); }
-
-        private void Import(object s, RoutedEventArgs e)
-        {
-            var dlg = new OpenFileDialog { Title = LanguageManager.BtnImportMod, Multiselect = true, Filter = "Mod|*.pak;*.utoc|All|*.*" }; if (dlg.ShowDialog() != true) return;
-            try { foreach (var f in dlg.FileNames) File.Copy(f, Path.Combine(_currentDir, Path.GetFileName(f)), true); LoadItems(); Toast.Show(LanguageManager.MsgImportMod(dlg.FileNames.Length), ToastType.Success); } catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
+            ExternalLauncher.OpenFolder(_currentDir);
         }
 
-        private void Pack(object s, RoutedEventArgs e)
+        private void CopyRoot(object s, RoutedEventArgs e)
         {
-            var sel = GetSelectedMods(); if (sel.Length == 0) { ThemedDialog.Show(Window.GetWindow(this), LanguageManager.MsgSelMod); return; }
-            var dlg = new SaveFileDialog { Title = LanguageManager.BtnPack, Filter = "ZIP|*.zip", FileName = "mod_pack.zip" }; if (dlg.ShowDialog() != true) return;
+            try { Clipboard.SetText(_currentDir); Toast.Show(LanguageManager.MsgCopied, ToastType.Success); }
+            catch { }
+        }
+
+        private void ModSel(object s, SelectionChangedEventArgs e)
+        {
+            try { UpdateToggleBtn(); } catch { }
+        }
+
+        private async void ModDblClick(object s, System.Windows.Input.MouseButtonEventArgs e)
+        {
             try
             {
-                using var zip = ZipFile.Open(dlg.FileName, ZipArchiveMode.Create); foreach (var m in sel) zip.CreateEntryFromFile(m.FilePath, Path.GetFileName(m.FilePath));
-                var entry = zip.CreateEntry($"{LanguageManager.PackTxtName}.txt"); using var w = new StreamWriter(entry.Open(), System.Text.Encoding.UTF8);
-                w.WriteLine("=== ETBTool Mod Pack ==="); w.WriteLine($"{(LanguageManager.IsChinese ? "打包时间" : "Time")}: {DateTime.Now:yyyy-MM-dd HH:mm:ss}"); w.WriteLine($"{(LanguageManager.IsChinese ? "文件数量" : "Files")}: {sel.Length}"); w.WriteLine();
-                foreach (var m in sel) { w.WriteLine($"{(LanguageManager.IsChinese ? "文件名" : "File")}: {Path.GetFileName(m.FilePath)}"); w.WriteLine($"{(LanguageManager.IsChinese ? "中文名" : "Name")}: {m.DisplayName}"); w.WriteLine($"{(LanguageManager.IsChinese ? "大小" : "Size")}: {m.Size}"); w.WriteLine(); }
-                w.WriteLine(LanguageManager.PackFooter);
-                Toast.Show(LanguageManager.MsgPackOK(sel.Length), ToastType.Success);
+                var sel = ModListBox.SelectedItem as ModEntry;
+                if (sel == null) return;
+                if (sel.IsDirectory)
+                {
+                    _currentDir = sel.FullPath;
+                    if (ModPathBox != null) ModPathBox.Text = _currentDir;
+                    await LoadDirectoryAsync(_currentDir);
+                }
+                else ExternalLauncher.OpenFile(sel.FullPath);
             }
-            catch (Exception ex) { Toast.Show($"{LanguageManager.MsgPackFail}: {ex.Message}", ToastType.Error); }
+            catch (Exception ex) { Logger.Log($"ModDblClick: {ex.Message}"); }
         }
 
-        private void Del(object s, RoutedEventArgs e)
+        private async void GoUp(object s, RoutedEventArgs e)
         {
-            var sel = GetSelectedMods(); if (sel.Length == 0) return; if (ThemedDialog.Show(Window.GetWindow(this), LanguageManager.MsgConfirmDelMod(sel.Length), LanguageManager.BtnConfirm, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
-            try { foreach (var m in sel) File.Delete(m.FilePath); LoadItems(); Toast.Show(LanguageManager.MsgDelMod(sel.Length), ToastType.Success); } catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
-        }
-
-        private void Toggle(object s, RoutedEventArgs e)
-        {
-            var sel = GetSelectedMods(); if (sel.Length == 0) return; int en = 0, dis = 0;
             try
             {
-                foreach (var m in sel) { var fi = new FileInfo(m.FilePath); var dir = fi.DirectoryName!; if (fi.Name.EndsWith(".disabled", StringComparison.OrdinalIgnoreCase)) { File.Move(fi.FullName, Path.Combine(dir, Path.GetFileNameWithoutExtension(fi.Name))); en++; } else { File.Move(fi.FullName, fi.FullName + ".disabled"); dis++; } }
-                LoadItems(); Toast.Show(LanguageManager.MsgToggle(en, dis), ToastType.Success);
+                var parent = Path.GetDirectoryName(_currentDir);
+                if (!string.IsNullOrEmpty(parent) && Directory.Exists(parent))
+                {
+                    _currentDir = parent;
+                    if (ModPathBox != null) ModPathBox.Text = _currentDir;
+                    await LoadDirectoryAsync(_currentDir);
+                }
             }
-            catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); }
+            catch { }
         }
 
-        private void ModSel(object s, SelectionChangedEventArgs e) { var mods = GetSelectedMods(); if (mods.Length > 1) ToggleBtn.Content = $"{LanguageManager.BtnToggle} ({mods.Length})"; else if (mods.Length == 1) ToggleBtn.Content = mods[0].Status == "OFF" ? LanguageManager.BtnEnable : LanguageManager.BtnDisable; }
-        private void SubmitNick(object s, RoutedEventArgs e) { try { Process.Start(new ProcessStartInfo(GamePaths.NicknameSubmitUrl) { UseShellExecute = true }); } catch (Exception ex) { Toast.Show(ex.Message, ToastType.Error); } }
+        private async void Refresh(object s, RoutedEventArgs e)
+        {
+            if (_operating) return;
+            var translations = _translation.LoadAsync();
+            await LoadDirectoryAsync(_currentDir);
+            await translations;
+        }
+
+        private async void Import(object s, RoutedEventArgs e)
+        {
+            try
+            {
+                var dlg = new OpenFileDialog { Filter = "ZIP|*.zip|PAK|*.pak|All|*.*", Multiselect = true };
+                if (dlg.ShowDialog() != true) return;
+                foreach (var file in dlg.FileNames)
+                {
+                    var ext = Path.GetExtension(file).ToLower();
+                    if (ext == ".zip") ZipFile.ExtractToDirectory(file, _currentDir, true);
+                    else
+                    {
+                        var dest = Path.Combine(_currentDir, Path.GetFileName(file));
+                        if (File.Exists(dest)) File.Delete(dest);
+                        File.Copy(file, dest);
+                    }
+                }
+                Toast.Show(LanguageManager.ModMgrImportSuccess, ToastType.Success);
+                await LoadDirectoryAsync(_currentDir);
+            }
+            catch (Exception ex)
+            {
+                ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrImportFailed(ex.Message), LanguageManager.ModMgrImportTitle);
+            }
+        }
+
+        private async void Pack(object s, RoutedEventArgs e)
+        {
+            if (_operating) return;
+            var selected = ModListBox.SelectedItems.Cast<ModEntry>().ToArray();
+            if (selected.Length == 0) { Toast.Show(LanguageManager.ModMgrNoSelection, ToastType.Info); return; }
+            var dialog = new SaveFileDialog { FileName = selected.Length == 1 ? selected[0].FileName + ".zip" : "Mods.zip", Filter = "ZIP|*.zip", DefaultExt = ".zip" };
+            if (dialog.ShowDialog() != true) return;
+            SetOperating(true);
+            try
+            {
+                await Task.Run(() => ModFileOperations.Pack(selected.Select(entry => entry.FullPath), dialog.FileName));
+                Logger.Log($"模组打包完成，共选中 {selected.Length} 项：{dialog.FileName}");
+                Toast.Show(LanguageManager.ModMgrPackSuccess, ToastType.Success);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"模组打包失败: {ex}");
+                ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrPackFailed(Logger.NormalizeForDisplay(ex.Message)), LanguageManager.ModMgrPackTitle);
+            }
+            finally { SetOperating(false); }
+        }
+
+        private void SetOperating(bool value)
+        {
+            _operating = value;
+            ModListBox.IsEnabled = !value;
+            BtnRefresh.IsEnabled = BtnUp.IsEnabled = BtnImport.IsEnabled = BtnDel.IsEnabled = !value;
+            UpdateToggleBtn();
+        }
+
+        private async void Del(object s, RoutedEventArgs e)
+        {
+            try
+            {
+                var sel = ModListBox.SelectedItem as ModEntry;
+                if (sel == null) { Toast.Show(LanguageManager.ModMgrNoSelection, ToastType.Info); return; }
+                var result = ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteConfirm(sel.FileName), LanguageManager.ModMgrDeleteTitle, MessageBoxButton.YesNo);
+                if (result != MessageBoxResult.Yes) return;
+                if (sel.IsDirectory) Directory.Delete(sel.FullPath, true); else File.Delete(sel.FullPath);
+                Toast.Show(LanguageManager.ModMgrDeleteSuccess, ToastType.Success);
+                await LoadDirectoryAsync(_currentDir);
+            }
+            catch (Exception ex) { ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteFailed(ex.Message), LanguageManager.ModMgrDeleteTitle); }
+        }
+
+        private async void Toggle(object s, RoutedEventArgs e)
+        {
+            if (_operating) return;
+            var selected = ModListBox.SelectedItems.Cast<ModEntry>().ToArray();
+            if (selected.Length == 0) { Toast.Show(LanguageManager.ModMgrNoSelection, ToastType.Info); return; }
+            bool enable = !selected.All(entry => entry.IsEnabled);
+            SetOperating(true);
+            try
+            {
+                var after = await Task.Run(() => ModFileOperations.Toggle(selected.Select(entry => entry.FullPath), enable));
+                Logger.Log($"模组状态切换完成：{(enable ? "启用" : "禁用")}，共选中 {selected.Length} 项");
+                await LoadDirectoryAsync(_currentDir);
+                foreach (var entry in _entries)
+                    if (after.Values.Contains(entry.FullPath, StringComparer.OrdinalIgnoreCase) && !ModListBox.SelectedItems.Contains(entry))
+                        ModListBox.SelectedItems.Add(entry);
+                Toast.Show(LanguageManager.ModMgrToggleSuccess(enable), ToastType.Success);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"模组状态切换失败: {ex}");
+                ThemedDialog.Show(Window.GetWindow(this), Logger.NormalizeForDisplay(ex.Message), "模组操作失败");
+                await LoadDirectoryAsync(_currentDir);
+            }
+            finally { SetOperating(false); }
+        }
     }
 }

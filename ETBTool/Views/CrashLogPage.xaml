@@ -6,7 +6,7 @@
 		<StackPanel>
 			<TextBlock x:Name="PageTitle" Style="{StaticResource PageTitle}"/>
 			<TextBlock x:Name="PageSub" Style="{StaticResource MutedText}" Margin="0,-4,0,20"/>
-			<Border Style="{StaticResource Card}">
+			<Border Style="{StaticResource Section}">
 				<StackPanel>
 					<TextBlock x:Name="LblPath" Style="{StaticResource SectionTitle}"/>
 					<Grid>
@@ -23,37 +23,55 @@
 			</Border>
 			<Border Style="{StaticResource Card}">
 				<StackPanel>
-					<TextBlock x:Name="LblList" Style="{StaticResource SectionTitle}"/>
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock x:Name="LblList" Style="{StaticResource SectionTitle}" Margin="0,0,0,4"/>
+                        <TextBlock x:Name="CurrentDirText" Style="{StaticResource MutedText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                    </StackPanel>
 					<Grid Margin="0,0,0,4">
 						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="80"/>
 							<ColumnDefinition Width="*"/>
 							<ColumnDefinition Width="120"/>
 							<ColumnDefinition Width="160"/>
 						</Grid.ColumnDefinitions>
-						<TextBlock x:Name="HName" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock x:Name="HSize" Grid.Column="1" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
-						<TextBlock x:Name="HMod"  Grid.Column="2" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HTag" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HName" Grid.Column="1" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HSize" Grid.Column="2" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
+						<TextBlock x:Name="HMod" Grid.Column="3" FontWeight="SemiBold" Style="{StaticResource ListSecondaryText}"/>
 					</Grid>
 					<Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,4"/>
-					<ListBox x:Name="FileListBox" Height="300" Margin="0,0,0,12" SelectionMode="Extended" ItemContainerStyle="{StaticResource TableListBoxItem}">
+                    <Grid Height="300" Margin="0,0,0,12">
+                    <ListBox x:Name="ItemListBox" SelectionMode="Extended" MouseDoubleClick="Item_DblClick" SelectionChanged="ItemSelectionChanged" ItemContainerStyle="{StaticResource TableListBoxItem}">
 						<ListBox.ItemTemplate>
 							<DataTemplate>
 								<Grid>
 									<Grid.ColumnDefinitions>
+										<ColumnDefinition Width="80"/>
 										<ColumnDefinition Width="*"/>
 										<ColumnDefinition Width="120"/>
 										<ColumnDefinition Width="160"/>
 									</Grid.ColumnDefinitions>
-									<TextBlock Text="{Binding Name}" Style="{StaticResource ListPrimaryText}"/>
-									<TextBlock Grid.Column="1" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
-									<TextBlock Grid.Column="2" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
+									<Border CornerRadius="4" Padding="6,2" Margin="0,0,10,0" HorizontalAlignment="Left" Background="{Binding TagColor}">
+										<TextBlock Text="{Binding Tag}" FontSize="11" Foreground="White" FontWeight="SemiBold"/>
+									</Border>
+									<TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource ListPrimaryText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" Margin="0,0,8,0"/>
+									<TextBlock Grid.Column="2" Text="{Binding Size}" Style="{StaticResource ListSecondaryText}"/>
+									<TextBlock Grid.Column="3" Text="{Binding Modified}" Style="{StaticResource ListSecondaryText}"/>
 								</Grid>
 							</DataTemplate>
 						</ListBox.ItemTemplate>
-					</ListBox>
+                    </ListBox>
+                    <StackPanel x:Name="ListStatePanel" VerticalAlignment="Center" HorizontalAlignment="Stretch" Margin="24,12">
+                        <TextBlock x:Name="ListStateIcon" FontFamily="Segoe MDL2 Assets" FontSize="32" Foreground="{DynamicResource TextSecondary}" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                        <TextBlock x:Name="ListStateTitle" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" TextAlignment="Center" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="ListStateDetail" Style="{StaticResource MutedText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,8,0,0" MaxHeight="100"/>
+                        <ProgressBar x:Name="ListLoadingBar" Height="3" Width="180" IsIndeterminate="True" Margin="0,16,0,0" Foreground="{DynamicResource AccentColor}"/>
+                    </StackPanel>
+                    </Grid>
 					<WrapPanel>
+						<Button x:Name="BtnUp" Style="{StaticResource BaseButton}" Click="GoUp_Click" Margin="0,0,8,0"/>
 						<Button x:Name="BtnRefresh" Style="{StaticResource AccentButton}" Click="Refresh_Click" Margin="0,0,8,0"/>
-						<Button x:Name="BtnOpenSel" Style="{StaticResource BaseButton}" Click="Open_Click" Margin="0,0,8,0"/>
+						<Button x:Name="BtnExport" Style="{StaticResource BaseButton}" Click="Export_Click" Margin="0,0,8,0"/>
 						<Button x:Name="BtnDel" Style="{StaticResource DangerButton}" Click="Delete_Click" Margin="0,0,8,0"/>
 						<Button x:Name="BtnClear" Style="{StaticResource DangerButton}" Click="ClearAll_Click"/>
 					</WrapPanel>

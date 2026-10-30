@@ -28,22 +28,25 @@ namespace ETBTool.Views
             BtnClear.Content = LanguageManager.BtnClearLog;
         }
 
-        // ★ 语言切换时重新加载并翻译
-        private void OnLangChanged() => Dispatcher.Invoke(LoadLogs);
+        private void OnLangChanged() => Dispatcher.Invoke(() =>
+        {
+            RefreshText();
+            LoadLogs();
+        });
 
-        // ★ 加载时翻译
+        // 日志内容始终以中文显示，历史日志文件保持原样。
         private void LoadLogs()
         {
-            var lines = Logger.ReadAll().Select(l => LanguageManager.TranslateLog(l));
+            var lines = Logger.ReadAll().Select(l => Logger.NormalizeForDisplay(l));
             LogTextBox.Text = string.Join(Environment.NewLine, lines);
             Dispatcher.BeginInvoke(() => LogTextBox.ScrollToEnd(), DispatcherPriority.Loaded);
         }
 
-        // ★ 新日志也翻译
+        // 新日志与历史日志使用同一套显示规则。
         private void OnNew(string entry) =>
             Dispatcher.Invoke(() =>
             {
-                LogTextBox.AppendText(Environment.NewLine + LanguageManager.TranslateLog(entry));
+                LogTextBox.AppendText(Environment.NewLine + Logger.NormalizeForDisplay(entry));
                 LogTextBox.ScrollToEnd();
             });
 

@@ -3,190 +3,134 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:etb="clr-namespace:ETBTool.Utils"
         Title="ETB Tool" Height="800" Width="1280" MinHeight="600" MinWidth="900"
-        WindowStartupLocation="CenterScreen" Background="Transparent"
-        AllowsTransparency="True" WindowStyle="None" ResizeMode="CanResizeWithGrip">
-	<Window.Resources>
-		<Style x:Key="WinBtnMin" TargetType="Button">
-			<Setter Property="Width" Value="48"/>
-			<Setter Property="Height" Value="42"/>
-			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-			<Setter Property="BorderThickness" Value="0"/>
-			<Setter Property="Cursor" Value="Hand"/>
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="bd" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent">
-							<Border.RenderTransform>
-								<ScaleTransform CenterX="24" CenterY="21"/>
-							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x2500;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-						</Border>
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="bd" Property="Background">
-									<Setter.Value>
-										<SolidColorBrush Color="{DynamicResource HoverTintColor}"/>
-									</Setter.Value>
-								</Setter>
-								<Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentColor}"/>
-								<Setter TargetName="ico" Property="Foreground" Value="White"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-			<Style.Triggers>
-				<EventTrigger RoutedEvent="MouseEnter">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.1" Duration="0:0:0.15">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-				<EventTrigger RoutedEvent="MouseLeave">
-					<BeginStoryboard>
-						<Storyboard>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-							<DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" To="1.0" Duration="0:0:0.2">
-								<DoubleAnimation.EasingFunction>
-									<CubicEase EasingMode="EaseOut"/>
-								</DoubleAnimation.EasingFunction>
-							</DoubleAnimation>
-						</Storyboard>
-					</BeginStoryboard>
-				</EventTrigger>
-			</Style.Triggers>
-		</Style>
-		<Style x:Key="WinBtnMax" TargetType="Button" BasedOn="{StaticResource WinBtnMin}">
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="bd" Background="{TemplateBinding Background}" BorderThickness="0,0,0,2" BorderBrush="Transparent">
-							<Border.RenderTransform>
-								<ScaleTransform CenterX="24" CenterY="21"/>
-							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x25A1;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-						</Border>
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="bd" Property="Background">
-									<Setter.Value>
-										<SolidColorBrush Color="{DynamicResource HoverTintColor}"/>
-									</Setter.Value>
-								</Setter>
-								<Setter TargetName="bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="bd" Property="Background" Value="{DynamicResource AccentColor}"/>
-								<Setter TargetName="ico" Property="Foreground" Value="White"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
-		<Style x:Key="WinBtnClose" TargetType="Button" BasedOn="{StaticResource WinBtnMin}">
-			<Setter Property="Template">
-				<Setter.Value>
-					<ControlTemplate TargetType="Button">
-						<Border x:Name="bd" Background="{TemplateBinding Background}">
-							<Border.RenderTransform>
-								<ScaleTransform CenterX="24" CenterY="21"/>
-							</Border.RenderTransform>
-							<TextBlock x:Name="ico" Text="&#x2715;" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
-						</Border>
-						<ControlTemplate.Triggers>
-							<Trigger Property="IsMouseOver" Value="True">
-								<Setter TargetName="bd" Property="Background" Value="#E81123"/>
-								<Setter TargetName="ico" Property="Foreground" Value="White"/>
-							</Trigger>
-							<Trigger Property="IsPressed" Value="True">
-								<Setter TargetName="bd" Property="Background" Value="#B2001B"/>
-								<Setter TargetName="ico" Property="Foreground" Value="White"/>
-							</Trigger>
-						</ControlTemplate.Triggers>
-					</ControlTemplate>
-				</Setter.Value>
-			</Setter>
-		</Style>
-	</Window.Resources>
-	<Border CornerRadius="12" BorderThickness="1" BorderBrush="{DynamicResource BorderColor}" Background="{DynamicResource WindowBackground}">
-		<Border.Effect>
-			<DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.2" Color="#000"/>
-		</Border.Effect>
-		<Grid>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="42"/>
-				<RowDefinition Height="*"/>
-			</Grid.RowDefinitions>
-			<Grid Grid.Row="0" Background="{DynamicResource SidebarBackground}" MouseLeftButtonDown="TitleBar_MouseDown">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="*"/>
-					<ColumnDefinition Width="Auto"/>
-				</Grid.ColumnDefinitions>
-				<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="14,0">
-					<Button x:Name="MenuBtn" Content="&#x2630;" Click="ToggleNav" Background="Transparent" Foreground="{DynamicResource TextPrimary}" BorderThickness="0" FontSize="18" Width="36" Height="36" Cursor="Hand" Padding="0"/>
-					<TextBlock Text="ETB Tool" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="10,0,0,0"/>
-					<!-- ★ 版本号，不是工具名 -->
-					<TextBlock x:Name="TitleVersionText" FontSize="11" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="6,0,0,0"/>
-				</StackPanel>
-				<StackPanel Grid.Column="1" Orientation="Horizontal">
-					<Button Click="Min_Click" Style="{StaticResource WinBtnMin}"/>
-					<Button Click="Max_Click" Style="{StaticResource WinBtnMax}"/>
-					<Button Click="Close_Click" Style="{StaticResource WinBtnClose}"/>
-				</StackPanel>
-			</Grid>
-			<Grid Grid.Row="1">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
-				<Border x:Name="Sidebar" Width="220" Grid.Column="0" Background="{DynamicResource SidebarBackground}" CornerRadius="0,0,0,12" ClipToBounds="True" CacheMode="BitmapCache">
-					<Grid>
-						<Grid.RowDefinitions>
-							<RowDefinition Height="*"/>
-							<RowDefinition Height="Auto"/>
-						</Grid.RowDefinitions>
-						<StackPanel x:Name="NavTop" Margin="12,16,12,8">
-							<RadioButton x:Name="NavSave"     Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavCrash"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavUE4"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavMod"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavDownload" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavPaths"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavLog"      Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-						</StackPanel>
-						<StackPanel x:Name="NavBot" Grid.Row="1" Margin="12,0,12,16">
-							<RadioButton x:Name="NavSettings" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavAbout"    Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-							<RadioButton x:Name="NavUpdate"   Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
-						</StackPanel>
-					</Grid>
-				</Border>
-				<Frame x:Name="ContentFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Background="Transparent" etb:ScrollBubble.Enabled="True">
-					<Frame.RenderTransform>
-						<TranslateTransform/>
-					</Frame.RenderTransform>
-				</Frame>
-				<StackPanel x:Name="ToastOverlay" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,16,0" IsHitTestVisible="False"/>
-			</Grid>
-		</Grid>
-	</Border>
+        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI" FontSize="14"
+        Background="{DynamicResource WindowBackground}"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        WindowStyle="None" ResizeMode="CanResizeWithGrip">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="48" GlassFrameThickness="0" ResizeBorderThickness="6"
+                      CornerRadius="0" UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+    <Window.Resources>
+        <Style x:Key="WindowButton" TargetType="Button">
+            <Setter Property="Width" Value="48"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocus}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource ButtonHoverBackground}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.65"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="WinBtnMax" TargetType="Button" BasedOn="{StaticResource WindowButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}">
+                            <Grid>
+                                <TextBlock x:Name="icoMax" Text="&#xE922;" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="icoRestore" Text="&#xE923;" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource ButtonHoverBackground}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.65"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="WinBtnClose" TargetType="Button" BasedOn="{StaticResource WindowButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource DangerColor}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Border x:Name="RootBorder" Background="{DynamicResource WindowBackground}"
+            BorderThickness="1" BorderBrush="{DynamicResource BorderColor}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <Grid Background="{DynamicResource SidebarBackground}" MouseLeftButtonDown="TitleBar_MouseDown" WindowChrome.IsHitTestVisibleInChrome="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0">
+                    <Button x:Name="MenuBtn" Content="&#xE700;" Click="ToggleNav" Style="{StaticResource WindowButton}" Width="40" Height="40"
+                            FontSize="18" ToolTip="导航 / Navigation" AutomationProperties.Name="Navigation"/>
+                    <TextBlock Text="ETB Tool" FontSize="17" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <TextBlock x:Name="TitleVersionText" FontSize="12" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Click="Min_Click" Content="&#xE921;" Style="{StaticResource WindowButton}" ToolTip="最小化 / Minimize" AutomationProperties.Name="Minimize"/>
+                    <Button x:Name="BtnMax" Click="Max_Click" Style="{StaticResource WinBtnMax}" ToolTip="最大化 / 还原 / Maximize / Restore" AutomationProperties.Name="Maximize or restore"/>
+                    <Button Click="Close_Click" Content="&#xE8BB;" Style="{StaticResource WinBtnClose}" ToolTip="关闭 / Close" AutomationProperties.Name="Close"/>
+                </StackPanel>
+                <Border Grid.ColumnSpan="2" Height="1" Background="{DynamicResource BorderColor}" VerticalAlignment="Bottom" IsHitTestVisible="False"/>
+            </Grid>
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border x:Name="Sidebar" Width="220" Background="{DynamicResource SidebarBackground}" BorderBrush="{DynamicResource BorderColor}"
+                        BorderThickness="0,0,1,0" ClipToBounds="True">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="NavTop" HorizontalAlignment="Stretch" Margin="8,16,8,8">
+                                <RadioButton x:Name="NavSave" Tag="&#xE74E;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavCrash" Tag="&#xE9D9;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavUE4" Tag="&#xE7FC;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavMod" Tag="&#xE8B7;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavDownload" Tag="&#xE896;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavPaths" Tag="&#xE838;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                                <RadioButton x:Name="NavLog" Tag="&#xE8A5;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                        <StackPanel x:Name="NavBot" Grid.Row="1" HorizontalAlignment="Stretch" Margin="8,0,8,16">
+                            <Border Height="1" Background="{DynamicResource BorderColor}" Margin="0,0,0,12"/>
+                            <RadioButton x:Name="NavSettings" Tag="&#xE713;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                            <RadioButton x:Name="NavAbout" Tag="&#xE946;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                            <RadioButton x:Name="NavUpdate" Tag="&#xE777;" Style="{StaticResource NavButton}" Checked="Nav_Checked"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+                <Frame x:Name="ContentFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Background="Transparent" etb:ScrollBubble.Enabled="True">
+                    <Frame.RenderTransform><TranslateTransform/></Frame.RenderTransform>
+                </Frame>
+                <StackPanel x:Name="ToastOverlay" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,16,0" IsHitTestVisible="False"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>
