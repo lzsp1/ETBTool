@@ -273,7 +273,7 @@ MULTIPLAYER_<存档名>_<难度>.sav
 
 本项目基于 **MIT License** 开源。
 
-欢迎二创、分发。如需提交 Mod 中文翻译数据，请通过 [飞书问卷]([(https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg)) 提交。
+欢迎二创、分发。如需提交 Mod 中文翻译数据，请通过 [飞书问卷](https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg) 提交。
 
 ---
 
