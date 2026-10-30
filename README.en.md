@@ -1,12 +1,9 @@
+```
 # ETB Tool
 
-**Escape the Backrooms Game Utility Tool**
-- [中文](https://github.com/lzsp1/ETBTool/blob/main/README.md)
+**Escape the Backrooms Game Assistant Tool**
+- [中文版](https://github.com/lzsp1/ETBTool/blob/main/README.md)
 
-![Version](https://img.shields.io/badge/version-0.0.02-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
-![.NET](https://img.shields.io/badge/.NET-8.0-purple)
 ---
 
 ## 📖 Table of Contents
@@ -14,14 +11,14 @@
 - [Feature Overview](#-feature-overview)
 - [Supported Theme Styles](#-supported-theme-styles)
 - [Project Structure](#-project-structure)
-- [System Requirements](#-system-requirements)
-- [Build & Run Guide](#-build--run-guide)
+- [Environment Requirements](#-environment-requirements)
+- [Build & Run](#-build--run)
 - [Version Update Checker](#-version-update-checker)
 - [Mod Translation Data](#-mod-translation-data)
 - [Automatic Game Path Detection](#-automatic-game-path-detection)
-- [Save File Naming Rules](#-save-file-naming-rules)
+- [Save File Naming Rule](#-save-file-naming-rule)
 - [Mod Disable Mechanism](#-mod-disable-mechanism)
-- [Mod Packaging Function](#-mod-packaging-function)
+- [Mod Packing Function](#-mod-packing-function)
 - [Config File Location](#-config-file-location)
 - [Window Controls](#-window-controls)
 - [License](#-license)
@@ -32,98 +29,104 @@
 ## ✨ Feature Overview
 
 | Feature | Description |
-| --- | --- |
-| **Save Manager** | View, edit and delete game saves; multi-select via `Ctrl + Click`; auto recognize difficulty tags |
-| **Crash Logs** | View and manage crash log files; bulk delete supported |
-| **UE4 Manager** | Browse game Win64 installation directory; import/delete files; one-click clear and jump to Steam |
-| **Mod Manager** | Install, disable (`.disabled` suffix), translate and package mods into ZIP with info document; multi-select via `Ctrl + Click` |
-| **Mod Downloader** | Quick jump to mod download website |
-| **Path Viewer** | One-click view and copy paths for saves, crash logs, game installation and mod folders |
-| **Operation Logs** | Real-time view of all program operations |
-| **Settings** | 6 built-in themes; Light/Dark/System-following color modes; custom accent color, background image and custom file paths |
-| **About Page** | Project introduction, open config directory, official website and open-source repository links |
-| **Update Checker** | Auto scan GitHub for new versions; download acceleration via domestic mirror links |
+|------|------|
+| **Save Management** | View, edit and delete game saves. Support multi-selection with `Ctrl+Click`. Automatically recognize difficulty tags |
+| **Crash Logs** | View and manage crash log files, support bulk deletion |
+| **UE4 Manager** | Browse the game Win64 installation folder. Support file import, deletion, one-click cleanup and jump to Steam |
+| **Mod Manager** | Install / disable (`.disabled` suffix) / translate / pack (ZIP + info doc) mods. Support multi-selection with `Ctrl+Click` |
+| **Mod Downloader** | Built-in mod library: search, category filter, pagination, detail pages and preview images. Two download options: direct download from this site or external link (open in browser). Files are cached to temp folder first, auto-install / save as / keep files after download completes |
+| **Path Viewer** | One-click view and copy paths for saves, crash logs, game directory and mod folder |
+| **Logger** | Real-time operation log viewer |
+| **Settings** | 6 theme styles, Light / Dark / System-follow modes, custom accent color, custom background image, custom file paths |
+| **About** | Project info, open config directory, official website, source repository |
+| **Update Check** | Auto / manual new version detection, forced update supported. When download is blocked (HTTP 404), prompt to use mirror link and support manual ZIP installation via "Select File" |
 
 ---
 
 ## 🎨 Supported Theme Styles
 
 | Theme | Description |
-| --- | --- |
-| Full Glass Style | Frosted glass visual effect |
-| Minimal White Space | Clean and bright interface |
-| Glassmorphism | Classic glassmorphism design |
-| Neumorphism | Soft neumorphic UI style |
-| 3D Stereo Style | Cards with three-dimensional depth effects |
-| Neon Color Style | Vibrant neon glow visual effects |
+|------|------|
+| Full Glass Style | Frosted glass effect |
+| Minimal Blank | Clean and bright layout |
+| Glassmorphism | Glassmorphism design |
+| Neumorphism | Neumorphism design |
+| 3D Card Style | Cards with 3D stereoscopic effects |
+| Neon Color | Neon glowing visual effect |
 
-Three color modes are available: **Light**, **Dark**, and **Follow System**.
+Color modes: **Light**, **Dark**, **Follow System**.
 
 ---
 
 ## 📁 Project Structure
-
 ```
-ETBTool/
+
+.
+├── App.xaml / App.xaml.cs           # Application Entry
+├── MainWindow.xaml / .cs            # Main Window
+├── ETBTool.csproj                   # Project File
+├── ETBTool.sln                      # Solution File
 ├── Models/
-│   └── GamePaths.cs               # Path management, version number, Steam AppID
-├── Themes/
-│   ├── BaseTheme.xaml             # Base UI styles (buttons, lists, cards, etc.)
-│   ├── ThemeManager.cs            # Theme management core
-│   ├── GlassTheme.xaml
-│   ├── MinimalTheme.xaml
-│   ├── GlassMorphismTheme.xaml
-│   ├── NeumorphismTheme.xaml
-│   ├── ThreeDTheme.xaml
-│   └── NeonTheme.xaml
+│   ├── ApiModels.cs                 # API Data Models
+│   └── GamePaths.cs                 # Path Manager, Version & Steam AppID
+├── Services/
+│   ├── ModApiClient.cs              # Mod Library API Client
+│   ├── ModFileOperations.cs         # Mod File Operations
+│   ├── ModTranslationService.cs     # Mod Translation Service
+│   ├── ConfigPersistence.cs         # Configuration Storage
+│   └── BackgroundMusicService.cs    # Background Audio Service
 ├── Utils/
-│   ├── Logger.cs                  # Logging utility
-│   ├── Toast.cs                   # Popup toast notification component
-│   ├── ScrollBubble.cs            # Scroll penetration behavior logic
-│   └── UpdateChecker.cs           # Version detection and download module
-├── Windows/
-│   └── ThemedDialog.cs            # Custom styled popup dialogs
+│   ├── Logger.cs                    # Logging Utility
+│   ├── Toast.cs                     # Toast Notification Component
+│   ├── ScrollBubble.cs              # Scroll-through Behaviour
+│   ├── ExternalLauncher.cs          # Open Explorer / Browser
+│   ├── RuntimeEnvironment.cs        # Runtime Environment Detector
+│   └── UpdateChecker.cs             # Update Check, Download & Install
+├── ViewModels/
+│   └── ModBrowserViewModel.cs       # Mod Library ViewModel
 ├── Views/
-│   ├── SaveManagerPage.xaml/.cs   # Save management page
-│   ├── CrashLogPage.xaml/.cs      # Crash log viewer page
-│   ├── UE4ManagerPage.xaml/.cs    # UE4 directory management page
-│   ├── ModManagerPage.xaml/.cs    # Mod management page
-│   ├── DownloadModPage.xaml/.cs   # Mod download navigation page
-│   ├── PathsPage.xaml/.cs         # Path viewing page
-│   ├── LogPage.xaml/.cs           # Operation log page
-│   ├── AboutPage.xaml/.cs         # About information page
-│   ├── SettingsPage.xaml/.cs      # Global settings page
-│   └── UpdatePage.xaml/.cs        # Update check page
-├── MainWindow.xaml/.cs            # Main program window
-├── App.xaml/.cs                   # Application entry point
-└── ETBTool.csproj                 # Project configuration file
+│   ├── SaveManagerPage.xaml/.cs     # Save Manager
+│   ├── CrashLogPage.xaml/.cs        # Crash Log Manager
+│   ├── UE4ManagerPage.xaml/.cs      # UE4 Manager
+│   ├── ModManagerPage.xaml/.cs      # Mod Manager
+│   ├── DownloadModPage.xaml/.cs     # Mod Library Download Page
+│   ├── PathsPage.xaml/.cs           # Path Viewer
+│   ├── LogPage.xaml/.cs             # Log Viewer
+│   ├── AboutPage.xaml/.cs           # About Page
+│   ├── SettingsPage.xaml/.cs        # Settings Page
+│   └── UpdatePage.xaml/.cs          # Update Check Page
+├── Windows/                         # Custom Popups & Editor Windows
+├── Themes/                          # 6 Theme Resource Dictionaries
+├── version.json                     # Release Version Metadata
+└── mod_names.json                   # Mod Name Translation Data
+
 ```
 
 ---
 
-## 🖥️ System Requirements
+## 🖥️ Environment Requirements
 
-- **Operating System**: Windows 10 / 11 (64-bit)
+- **OS**: Windows 10 / 11 (64-bit)
 - **Runtime**: .NET 8.0 Desktop Runtime
 - **Target Framework**: `net8.0-windows`
-- **Deployment Method**: Single-file publish (win-x64)
+- **Publish Mode**: Single-file publish (win-x64)
 
 ---
 
-## 🔧 Build & Run Guide
+## 🔧 Build & Run
 
-```
+```bash
 # Clone repository
-git clone https://github.com/lzsp1/ETBTool.git
+git clone [https://github.com/lzsp1/ETBTool.git](https://github.com/lzsp1/ETBTool.git)
 cd ETBTool
 
 # Restore dependencies
 dotnet restore
 
-# Compile project
+# Build project
 dotnet build -c Release
 
-# Publish single-file executable
+# Publish single executable
 dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true
 ```
 
@@ -131,41 +134,41 @@ dotnet publish -c Release -r win-x64 --self-contained true /p:PublishSingleFile=
 
 ## 🔄 Version Update Checker
 
-The program automatically fetches the latest version info from the below URL on startup:
+On startup, the tool fetches the latest release info from:
 
 ```
-https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/version.json
+[https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/version.json](https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/version.json)
 ```
 
-### `version.json` Format
+### `version.json` Schema
 
 ```
 {
   "latest_version": "0.0.02",
-  "download_url": "https://github.com/lzsp1/ETBTool/releases/download/V0.0.02/ETBTool.V0.0.02.zip",
-  "mirror_url": "shturl.cc/s6V2gaPcwXIdwNQpYTiXrUvF4YSOKhgpG3rTdm6EJiITeLymMQzAP3W9uArbPD78VOcJ1nZ3p0zpMfnAWERwJss"
+  "download_url": "[https://github.com/lzsp1/ETBTool/releases/download/V0.0.02/ETBTool.V0.0.02.zip](https://github.com/lzsp1/ETBTool/releases/download/V0.0.02/ETBTool.V0.0.02.zip)",
+  "mirror_url": "shturl.cc/HvlcbmJ4oxxBOXYGL8GvBLnoYhHeTh555iTWXJ4Eit82PzYWMkcDlcAOzcWxh21EQlF3Xi6RoRi1odCBoegFK0m"
 }
 ```
 
 | Field | Description | Required |
 | --- | --- | --- |
-| `latest_version` | Latest available version number | Yes |
-| `download_url` | Original GitHub release download link | No |
-| `mirror_url` | Accelerated domestic mirror link | No |
+| `latest_version` | Latest version tag | Yes |
+| `download_url` | Original GitHub download link | No |
+| `mirror_url` | Accelerated mirror link for China | No |
 
 > 
-> The tool prioritizes `mirror_url`, then falls back to `download_url`. If both fail, it will automatically open the GitHub Releases page.
+> Priority: `mirror_url` first, then `download_url`. If both fail, open GitHub Releases webpage automatically.
 
-**Available domestic mirror prefixes**: `shturl.cc/r16imCvKD`, `https://ghproxy.com/`, `https://gh-proxy.com/`
+**Available mirror prefixes**: `shturl.cc/OOxh2UCrK`, `[https://ghproxy.com/](https://ghproxy.com/)`, `[https://gh-proxy.com/](https://gh-proxy.com/)`
 
 ---
 
 ## 🌐 Mod Translation Data
 
-Chinese mod display names are pulled from the following remote file:
+Mod name translation data is fetched from:
 
 ```
-https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json
+[https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json](https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json)
 ```
 
 ### Supported Formats (Object or Array)
@@ -174,8 +177,8 @@ https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json
 
 ```
 {
-  "SomeMod.pak": "Chinese Mod Display Name",
-  "AnotherMod.pak": "Another Mod Name"
+  "SomeMod.pak": "Some Mod",
+  "AnotherMod.pak": "Another Mod"
 }
 ```
 
@@ -183,8 +186,8 @@ https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json
 
 ```
 [
-  { "filename": "SomeMod.pak", "name": "Chinese Mod Display Name" },
-  { "filename": "AnotherMod.pak", "name": "Another Mod Name" }
+  { "filename": "SomeMod.pak", "name": "Some Mod" },
+  { "filename": "AnotherMod.pak", "name": "Another Mod" }
 ]
 ```
 
@@ -192,20 +195,20 @@ https://raw.githubusercontent.com/lzsp1/ETBTool/refs/heads/main/mod_names.json
 
 ## 🗂️ Automatic Game Path Detection
 
-| Path Type | Default Location |
+| Path | Default Location |
 | --- | --- |
-| Save Files | `%LOCALAPPDATA%\EscapeTheBackrooms\Saved\SaveGames` |
-| Crash Logs | `%LOCALAPPDATA%\EscapeTheBackrooms\Saved\Crashes` |
-| UE4 Bin Directory | `<GameInstallPath>\EscapeTheBackrooms\Binaries\Win64` |
-| Mod Pak Directory | `<GameInstallPath>\EscapeTheBackrooms\Content\Paks` |
+| Save Folder | `%LOCALAPPDATA%\EscapeTheBackrooms\Saved\SaveGames` |
+| Crash Log Folder | `%LOCALAPPDATA%\EscapeTheBackrooms\Saved\Crashes` |
+| UE4 Directory | `<GameInstallPath>\EscapeTheBackrooms\Binaries\Win64` |
+| Mod Directory | `<GameInstallPath>\EscapeTheBackrooms\Content\Paks` |
 
-The program auto-scans all Steam library folders across multiple disk drives to locate the game. Custom manual paths can also be set in Settings.
+The program scans Steam library folders automatically, supporting multiple disks and custom Steam library locations. Manual path override is available in Settings.
 
 ---
 
-## 💾 Save File Naming Rules
+## 💾 Save File Naming Rule
 
-Only saves matching the format below will be recognized:
+Only files matching this pattern will be recognized:
 
 ```
 MULTIPLAYER_<SaveName>_<Difficulty>.sav
@@ -213,7 +216,7 @@ MULTIPLAYER_<SaveName>_<Difficulty>.sav
 
 Supported difficulty tags:
 
-| Tag | Display Name | Color |
+| Tag | Chinese | Color |
 | --- | --- | --- |
 | `Easy` | Easy | Green |
 | `Normal` | Normal | Blue |
@@ -221,25 +224,25 @@ Supported difficulty tags:
 | `Nightmare` | Nightmare | Red |
 
 > 
-> Files that do not follow this naming convention will be hidden automatically.
+> Files that do not match the naming rule will be hidden automatically.
 
 ---
 
 ## 🚫 Mod Disable Mechanism
 
-- **Disable Mod**: Append `.disabled` suffix to filename
+- **Disable**: Append `.disabled` suffix to filename
 `mod.pak  →  mod.pak.disabled`
-- **Enable Mod**: Remove the `.disabled` suffix
+- **Enable**: Remove the `.disabled` suffix
 `mod.pak.disabled  →  mod.pak`
 
 ---
 
-## 📦 Mod Packaging Function
+## 📦 Mod Packing Function
 
-Select one or multiple mod files (multi-select via `Ctrl + Click`), then click **Package Selected**. A `.zip` archive will be generated containing:
+Select one or multiple mod files (multi-select with `Ctrl+Click`), click **Pack Selected**, it will generate a `.zip` archive containing:
 
-- All selected mod pak files
-- `Generated by Escape the Backrooms Game Utility.txt` (contains packaging info and license statement)
+- All selected mod files
+- `Generated by Escape the Backrooms Game Tool.txt` (contains packing info and license statement)
 
 ---
 
@@ -247,28 +250,28 @@ Select one or multiple mod files (multi-select via `Ctrl + Click`), then click *
 
 ```
 %APPDATA%\ETBTool\
-├── settings.json    # Stores theme, custom paths and other preferences
-└── operation.log    # Full program operation logs
+├── settings.json    # Theme, path and other configurations
+└── operation.log    # Operation logs
 ```
 
 ---
 
 ## 🪟 Window Controls
 
-- Custom borderless window design
+- Custom borderless window supported
 - Drag title bar to move window
-- Double-click title bar to maximize/restore window
-- Minimize, maximize and close buttons with hover animation effects
-- Close button highlights red on mouse hover
-- Animated expand/collapse sidebar
+- Double-click title bar to maximize / restore
+- Minimize, maximize and close buttons with hover animation
+- Close button highlights red on hover
+- Sidebar collapse / expand animation
 
 ---
 
 ## 📄 License
 
-This project is open-sourced under the **MIT License**.
+This project is open-source under the **MIT License**.
 
-Modification and redistribution are permitted. To contribute Chinese mod name translations, submit via [Issues](https://github.com/lzsp1/ETBTool/issues).
+Modification and redistribution are welcome. If you want to submit mod Chinese translation data, please submit via [Feishu Form](https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg).
 
 ---
 
@@ -276,8 +279,9 @@ Modification and redistribution are permitted. To contribute Chinese mod name tr
 
 | Purpose | Link |
 | --- | --- |
-| Open Source Repository | [https://github.com/lzsp1/ETBTool](https://github.com/lzsp1/ETBTool) |
-| Official Website | [https://taolihoushiwanyouqun.wordpress.com/](https://taolihoushiwanyouqun.wordpress.com/) |
-| Mod Download Portal | [https://etbtoolmod.xn--online-o20ki81q.top/](https://etbtoolmod.xn--online-o20ki81q.top/) |
-| Release Downloads | [https://github.com/lzsp1/ETBTool/releases](https://github.com/lzsp1/ETBTool/releases) |
-| Submit Mod Name Translations | [https://github.com/lzsp1/ETBTool/issues](https://github.com/lzsp1/ETBTool/issues) |
+| Source Repository | [](https://github.com/lzsp1/ETBTool)[https://github.com/lzsp1/ETBTool](https://github.com/lzsp1/ETBTool) |
+| Official Website | [](https://taolihoushiwanyouqun.wordpress.com/)[https://taolihoushiwanyouqun.wordpress.com/](https://taolihoushiwanyouqun.wordpress.com/) |
+| Mod Download Site | [](https://backroomsmod.xn--online-o20ki81q.top/)[https://backroomsmod.xn--online-o20ki81q.top/](https://backroomsmod.xn--online-o20ki81q.top/) |
+| Releases Download | [](https://github.com/lzsp1/ETBTool/releases)[https://github.com/lzsp1/ETBTool/releases](https://github.com/lzsp1/ETBTool/releases) |
+| Submit Mod Names | [https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg](https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg) |
+| ``` |  |
