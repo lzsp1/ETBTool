@@ -273,7 +273,7 @@ MULTIPLAYER_<存档名>_<难度>.sav
 
 本项目基于 **MIT License** 开源。
 
-欢迎二创、分发。如需提交 Mod 中文翻译数据，请通过 [Issues](https://github.com/lzsp1/ETBTool/issues) 提交。
+欢迎二创、分发。如需提交 Mod 中文翻译数据，请通过 [飞书问卷]([https://github.com/lzsp1/ETBTool/issues](https://acnq9mbub8ek.feishu.cn/wiki/DU1FwJ3t3idaWDkjfxqcmkujnfc?from=from_copylink)) 提交。
 
 ---
 
@@ -283,6 +283,6 @@ MULTIPLAYER_<存档名>_<难度>.sav
 |------|------|
 | 开源仓库 | [https://github.com/lzsp1/ETBTool](https://github.com/lzsp1/ETBTool) |
 | 官方网站 | [https://taolihoushiwanyouqun.wordpress.com/](https://taolihoushiwanyouqun.wordpress.com/) |
-| Mod 下载站 | [https://etbtoolmod.xn--online-o20ki81q.top/](https://etbtoolmod.xn--online-o20ki81q.top/) |
+| Mod 下载站 | [https://backroomsmod.xn--online-o20ki81q.top/](https://backroomsmod.xn--online-o20ki81q.top/) |
 | Releases 下载 | [https://github.com/lzsp1/ETBTool/releases](https://github.com/lzsp1/ETBTool/releases) |
-| 提交 Mod 昵称 | [https://github.com/lzsp1/ETBTool/issues](https://github.com/lzsp1/ETBTool/issues) |
+| 提交 Mod 昵称 | [https://acnq9mbub8ek.feishu.cn/wiki/DU1FwJ3t3idaWDkjfxqcmkujnfc?from=from_copylink]([https://github.com/lzsp1/ETBTool/issues](https://acnq9mbub8ek.feishu.cn/wiki/DU1FwJ3t3idaWDkjfxqcmkujnfc?from=from_copylink)) |
