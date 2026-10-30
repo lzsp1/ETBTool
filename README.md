@@ -3,7 +3,7 @@
 **逃离后室（Escape the Backrooms）游戏辅助工具**
 - [English Version](https://github.com/lzsp1/ETBTool/blob/main/README.en.md)
 
-![Version](https://img.shields.io/badge/version-0.0.02-blue)
+![Version](https://img.shields.io/badge/version-26.10.301-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple)
@@ -38,12 +38,12 @@
 | **崩溃日志** | 查看和管理崩溃日志文件，支持多选删除 |
 | **UE4 管理** | 浏览游戏安装目录（Win64），支持导入文件、删除、一键清空后跳转 Steam |
 | **Mod 管理** | 安装、禁用（`.disabled` 后缀）、翻译、打包（ZIP + 信息文档），支持 `Ctrl+点击` 多选 |
-| **下载 Mod** | 跳转至 Mod 下载站 |
+| **下载 Mod** | 内置模组库：搜索、分类、分页、详情与预览图；下载可选「本站下载」或「直链下载」（浏览器打开）；先暂存到临时目录，完成后自动安装 / 另存 / 保留 |
 | **查看路径** | 一键查看并复制存档、崩溃日志、游戏安装、Mod 安装路径 |
 | **日志** | 实时查看操作日志 |
 | **设置** | 6 种主题风格、浅色/深色/跟随系统、自定义强调色、背景图片、自定义路径 |
 | **关于** | 项目信息、打开配置目录、官方网站、开源仓库 |
-| **检查更新** | 从 GitHub 自动检测新版本，支持国内镜像加速下载 |
+| **检查更新** | 自动 / 手动检测新版本，支持强制更新；下载被风控（HTTP 404）时提示改用直链，并可用「选择文件」安装手动下载的 ZIP |
 
 ---
 
@@ -65,39 +65,44 @@
 ## 📁 项目结构
 
 ```
-ETBTool/
+.
+├── App.xaml / App.xaml.cs           # 应用入口
+├── MainWindow.xaml / .cs            # 主窗口
+├── ETBTool.csproj                   # 项目文件
+├── ETBTool.sln                      # 解决方案
 ├── Models/
-│   └── GamePaths.cs               # 路径管理、版本号、Steam AppID
-├── Themes/
-│   ├── BaseTheme.xaml             # 基础样式（按钮、列表、卡片等）
-│   ├── ThemeManager.cs            # 主题管理器
-│   ├── GlassTheme.xaml
-│   ├── MinimalTheme.xaml
-│   ├── GlassMorphismTheme.xaml
-│   ├── NeumorphismTheme.xaml
-│   ├── ThreeDTheme.xaml
-│   └── NeonTheme.xaml
+│   ├── ApiModels.cs                 # 接口数据模型
+│   └── GamePaths.cs                 # 路径管理、版本号、Steam AppID
+├── Services/
+│   ├── ModApiClient.cs              # 模组库接口客户端
+│   ├── ModFileOperations.cs         # Mod 文件操作
+│   ├── ModTranslationService.cs     # Mod 翻译
+│   ├── ConfigPersistence.cs         # 配置持久化
+│   └── BackgroundMusicService.cs    # 背景音乐
 ├── Utils/
-│   ├── Logger.cs                  # 日志工具
-│   ├── Toast.cs                   # Toast 通知组件
-│   ├── ScrollBubble.cs            # 滚动穿透行为
-│   └── UpdateChecker.cs           # 更新检测与下载
-├── Windows/
-│   └── ThemedDialog.cs            # 自定义弹窗
+│   ├── Logger.cs                    # 日志工具
+│   ├── Toast.cs                     # Toast 通知组件
+│   ├── ScrollBubble.cs              # 滚动穿透行为
+│   ├── ExternalLauncher.cs          # 打开浏览器/资源管理器
+│   ├── RuntimeEnvironment.cs        # 运行环境检测
+│   └── UpdateChecker.cs             # 更新检测、下载与安装
+├── ViewModels/
+│   └── ModBrowserViewModel.cs       # 模组库视图模型
 ├── Views/
-│   ├── SaveManagerPage.xaml/.cs   # 存档管理
-│   ├── CrashLogPage.xaml/.cs      # 崩溃日志
-│   ├── UE4ManagerPage.xaml/.cs    # UE4 管理
-│   ├── ModManagerPage.xaml/.cs    # Mod 管理
-│   ├── DownloadModPage.xaml/.cs   # 下载 Mod
-│   ├── PathsPage.xaml/.cs         # 查看路径
-│   ├── LogPage.xaml/.cs           # 日志
-│   ├── AboutPage.xaml/.cs         # 关于
-│   ├── SettingsPage.xaml/.cs      # 设置
-│   └── UpdatePage.xaml/.cs        # 检查更新
-├── MainWindow.xaml/.cs            # 主窗口
-├── App.xaml/.cs                   # 应用入口
-└── ETBTool.csproj                 # 项目文件
+│   ├── SaveManagerPage.xaml/.cs     # 存档管理
+│   ├── CrashLogPage.xaml/.cs        # 崩溃日志
+│   ├── UE4ManagerPage.xaml/.cs      # UE4 管理
+│   ├── ModManagerPage.xaml/.cs      # Mod 管理
+│   ├── DownloadModPage.xaml/.cs     # 下载 Mod（模组库）
+│   ├── PathsPage.xaml/.cs           # 查看路径
+│   ├── LogPage.xaml/.cs             # 日志
+│   ├── AboutPage.xaml/.cs           # 关于
+│   ├── SettingsPage.xaml/.cs        # 设置
+│   └── UpdatePage.xaml/.cs          # 检查更新
+├── Windows/                         # 自定义弹窗与编辑窗口
+├── Themes/                          # 6 套主题资源
+├── version.json                     # 当前发布版本信息
+└── mod_names.json                   # Mod 名称翻译数据
 ```
 
 ---
