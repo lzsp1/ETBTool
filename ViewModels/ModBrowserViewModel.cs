@@ -174,7 +174,7 @@ namespace ETBTool.ViewModels
                 if (id > 0) _ = LoadDetailAsync(id);
             });
             DownloadCmd = new AsyncRelayCommand(DownloadModAsync);
-            DownloadDirectCmd = new AsyncRelayCommand(OpenDirectInBrowserAsync);
+            DownloadDirectCmd = new AsyncRelayCommand(() => OpenDirectInBrowserAsync());
             CancelDlCmd = new RelayCommand(p => { if (p is DownloadTask t) t.Cts?.Cancel(); });
             DismissDlCmd = new RelayCommand(p =>
             {
@@ -422,7 +422,7 @@ namespace ETBTool.ViewModels
             }
         }
 
-        private async Task OpenDirectInBrowserAsync()
+        private async Task OpenDirectInBrowserAsync(bool skipConfirm = false)
         {
             if (DetailMod == null) return;
             if (string.IsNullOrEmpty(_token)) { Toast.Show(LanguageManager.ModLoginExpired, ToastType.Error); return; }
@@ -432,7 +432,7 @@ namespace ETBTool.ViewModels
                 ? "直链下载会打开系统默认浏览器，由浏览器从 123 云盘直接下载文件。\n\n软件本身不会下载该文件，是否继续？"
                 : "Direct download opens your default browser and downloads from the storage provider.\n\nETBTool itself will not download the file. Continue?";
             var title = LanguageManager.IsChinese ? "直链下载" : "Direct download";
-            if (ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+            if (!skipConfirm && ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
             try
             {
                 var url = await _api.GetDownloadUrlAsync(DetailMod.Id, "direct");
@@ -573,7 +573,21 @@ namespace ETBTool.ViewModels
                 task.ShowCancel = false;
                 task.ShowDismiss = true;
                 Logger.Log($"Download: {ex.Message}");
-                Toast.Show(LanguageManager.ModDlNetworkError(ex.Message), ToastType.Error);
+                if (!direct)
+                {
+                    var message = LanguageManager.IsChinese
+                        ? $"本站下载失败：{ex.Message}\n\n是否改用直链下载？\n直链下载会打开系统默认浏览器，由浏览器从 123 云盘下载文件。"
+                        : $"Site download failed: {ex.Message}\n\nUse the direct link instead?\nIt opens your default browser and downloads from the storage provider.";
+                    var title = LanguageManager.IsChinese ? "下载失败" : "Download failed";
+                    var choice = ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo,
+                        LanguageManager.IsChinese ? "改用直链下载" : "Use direct link",
+                        LanguageManager.IsChinese ? "取消" : "Cancel");
+                    if (choice == MessageBoxResult.Yes) await OpenDirectInBrowserAsync(true);
+                }
+                else
+                {
+                    Toast.Show(LanguageManager.ModDlNetworkError(ex.Message), ToastType.Error);
+                }
             }
         }
 
