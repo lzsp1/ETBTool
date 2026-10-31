@@ -26,6 +26,8 @@ public class ModItem
     [JsonPropertyName("cover_image")] public string? CoverImage { get; set; }
     [JsonPropertyName("downloads")] public int Downloads { get; set; }
     [JsonPropertyName("images")] public List<ModImage> Images { get; set; } = new();
+    [JsonPropertyName("storage_type")] public string StorageType { get; set; } = "site";
+    [JsonPropertyName("external_url")] public string ExternalUrl { get; set; } = "";
     [JsonPropertyName("dependencies")] public List<ModDependency> Dependencies { get; set; } = new();
     [JsonPropertyName("version")] public JsonElement VersionRaw { get; set; }
     [JsonIgnore] public string Version { get { try { return VersionRaw.ValueKind switch { JsonValueKind.String => VersionRaw.GetString() ?? "", JsonValueKind.Number => VersionRaw.GetDouble().ToString("0.##"), JsonValueKind.Null => "", JsonValueKind.Undefined => "", _ => VersionRaw.ToString() }; } catch { return ""; } } }

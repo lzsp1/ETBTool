@@ -400,11 +400,34 @@ namespace ETBTool.ViewModels
 
         // ═══ Download ═══
 
+        private async Task OpenExternalStorageAsync()
+        {
+            if (DetailMod == null) return;
+            var message = LanguageManager.IsChinese
+                ? "本模组由上传者自提供存储方式，需要唤起浏览器，无法实现本地下载。\n\n是否现在打开浏览器访问上传者提供的下载页面？"
+                : "This mod is hosted by its uploader. It requires opening your browser and cannot be downloaded locally.\n\nOpen the uploader's download page now?";
+            var title = LanguageManager.IsChinese ? "上传者自提供下载" : "Uploader-hosted download";
+            if (ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
+            try
+            {
+                var url = await _api.GetDownloadUrlAsync(DetailMod.Id);
+                if (string.IsNullOrWhiteSpace(url)) throw new InvalidDataException("上传者未提供有效的下载地址");
+                if (!ExternalLauncher.OpenWebsite(url)) throw new InvalidOperationException("无法打开浏览器");
+                Toast.Show(LanguageManager.IsChinese ? "已在浏览器中打开上传者的下载页面" : "Opened the uploader's page in your browser", ToastType.Success);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"外部存储下载失败：{ex.Message}");
+                Toast.Show(LanguageManager.IsChinese ? "打开下载页面失败：" + ex.Message : "Failed to open the download page: " + ex.Message, ToastType.Error);
+            }
+        }
+
         private async Task OpenDirectInBrowserAsync()
         {
             if (DetailMod == null) return;
             if (string.IsNullOrEmpty(_token)) { Toast.Show(LanguageManager.ModLoginExpired, ToastType.Error); return; }
             if (DetailMod.IsDisabled) { Toast.Show(LanguageManager.ModDetailDisabled, ToastType.Error); return; }
+            if (string.Equals(DetailMod.StorageType, "external", StringComparison.OrdinalIgnoreCase)) { await OpenExternalStorageAsync(); return; }
             var message = LanguageManager.IsChinese
                 ? "直链下载会打开系统默认浏览器，由浏览器从 123 云盘直接下载文件。\n\n软件本身不会下载该文件，是否继续？"
                 : "Direct download opens your default browser and downloads from the storage provider.\n\nETBTool itself will not download the file. Continue?";
@@ -431,6 +454,7 @@ namespace ETBTool.ViewModels
             if (DetailMod == null) return;
             if (string.IsNullOrEmpty(_token)) { Toast.Show(LanguageManager.ModLoginExpired, ToastType.Error); return; }
             if (DetailMod.IsDisabled) { Toast.Show(LanguageManager.ModDetailDisabled, ToastType.Error); return; }
+            if (string.Equals(DetailMod.StorageType, "external", StringComparison.OrdinalIgnoreCase)) { await OpenExternalStorageAsync(); return; }
 
             var existing = Downloads.FirstOrDefault(t => t.ModId == DetailMod.Id);
             if (existing != null && existing.ShowCancel) { Toast.Show(LanguageManager.ModDlAlready, ToastType.Info); return; }
