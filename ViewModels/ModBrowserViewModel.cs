@@ -429,8 +429,8 @@ namespace ETBTool.ViewModels
             if (DetailMod.IsDisabled) { Toast.Show(LanguageManager.ModDetailDisabled, ToastType.Error); return; }
             if (string.Equals(DetailMod.StorageType, "external", StringComparison.OrdinalIgnoreCase)) { await OpenExternalStorageAsync(); return; }
             var message = LanguageManager.IsChinese
-                ? "直链下载会打开系统默认浏览器，由浏览器从 123 云盘直接下载文件。\n\n软件本身不会下载该文件，是否继续？"
-                : "Direct download opens your default browser and downloads from the storage provider.\n\nETBTool itself will not download the file. Continue?";
+                ? "直链下载由存储方（123 云盘）提供文件。\n\n建议先安装 123 云盘客户端，在客户端内下载是免费的；\n若直接用浏览器下载，可能会产生流量或会员费用。\n\n是否打开浏览器？"
+                : "Direct links are served by the storage provider (123Pan).\n\nInstall the 123Pan client for free downloads;\ndownloading in a browser may incur traffic or membership fees.\n\nOpen your browser?";
             var title = LanguageManager.IsChinese ? "直链下载" : "Direct download";
             if (!skipConfirm && ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo) != MessageBoxResult.Yes) return;
             try
@@ -576,7 +576,7 @@ namespace ETBTool.ViewModels
                 if (!direct)
                 {
                     var message = LanguageManager.IsChinese
-                        ? $"本站下载失败：{ex.Message}\n\n是否改用直链下载？\n直链下载会打开系统默认浏览器，由浏览器从 123 云盘下载文件。"
+                        ? $"本站下载失败：{ex.Message}\n\n是否改用直链下载？\n直链由存储方（123 云盘）提供：建议安装 123 云盘客户端免费下载；\n直接用浏览器下载可能产生流量或会员费用。"
                         : $"Site download failed: {ex.Message}\n\nUse the direct link instead?\nIt opens your default browser and downloads from the storage provider.";
                     var title = LanguageManager.IsChinese ? "下载失败" : "Download failed";
                     var choice = ThemedDialog.Show(Application.Current?.MainWindow, message, title, MessageBoxButton.YesNo,
