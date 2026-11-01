@@ -34,6 +34,8 @@ namespace ETBTool
         private bool _updateInProgress;
         private bool _retryUpdates;
         private bool _closingForUpdate;
+        private bool _windowAnimating;
+        private Rect _normalBounds = Rect.Empty;
         private string _lastPromptedUpdate = "";
         private readonly CancellationTokenSource _updateLifetime = new();
         private readonly System.Windows.Threading.DispatcherTimer _updateRetryTimer = new();
@@ -47,6 +49,7 @@ namespace ETBTool
             NetworkChange.NetworkAddressChanged += UpdateNetworkAddressChanged;
             Closed += CloseUpdateChecks;
             Loaded += OnLoaded;
+            SizeChanged += Window_SizeChanged;
             LanguageManager.LanguageChanged += RefreshNav;
         }
 
@@ -434,19 +437,67 @@ namespace ETBTool
 
         private void Max_Click(object s, RoutedEventArgs e)
         {
-            // 不再对整窗做 0.98→1 的缩放动画：窗口从还原到最大化时
-            // 内容区域一次性放大，缩放动画会让显卡重复合成整窗，反而显得卡顿。
-            // 交给系统原生窗口动画处理，最大化/还原更顺滑。
+            // 用窗口自身的几何动画（Left/Top/Width/Height）做缓慢放大/缩小，
+            // 不再对整窗做 RenderTransform 缩放，避免大窗口重复合成导致掉帧。
+            if (_windowAnimating) return;
+
             if (WindowState == WindowState.Maximized)
             {
+                var target = _normalBounds.Width > 0 && _normalBounds.Height > 0
+                    ? _normalBounds
+                    : new Rect(Left, Top, Math.Max(Width, 900), Math.Max(Height, 640));
+                var from = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
+                _windowAnimating = true;
                 WindowState = WindowState.Normal;
-                SetMaxButtonIcon(false);
+                Left = from.Left; Top = from.Top; Width = from.Width; Height = from.Height;
+                AnimateWindowTo(target, () => SetMaxButtonIcon(false));
             }
             else
             {
-                WindowState = WindowState.Maximized;
-                SetMaxButtonIcon(true);
+                _normalBounds = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
+                var area = SystemParameters.WorkArea;
+                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () =>
+                {
+                    WindowState = WindowState.Maximized;
+                    SetMaxButtonIcon(true);
+                });
             }
+        }
+
+        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_windowAnimating || WindowState != WindowState.Normal) return;
+            if (ActualWidth <= 0 || ActualHeight <= 0) return;
+            _normalBounds = new Rect(Left, Top, ActualWidth, ActualHeight);
+        }
+
+        private void AnimateWindowTo(Rect target, Action completed)
+        {
+            _windowAnimating = true;
+            var from = new Rect(Left, Top,
+                ActualWidth > 0 ? ActualWidth : Width,
+                ActualHeight > 0 ? ActualHeight : Height);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            const double durationMs = 320.0;
+            EventHandler? tick = null;
+            tick = (_, _) =>
+            {
+                var progress = Math.Min(1.0, watch.Elapsed.TotalMilliseconds / durationMs);
+                // easeInOutCubic：起步和收尾都更柔和，中段不至于显得“弹”。
+                var eased = progress < 0.5
+                    ? 4 * progress * progress * progress
+                    : 1 - Math.Pow(-2 * progress + 2, 3) / 2;
+                Left = from.Left + (target.Left - from.Left) * eased;
+                Top = from.Top + (target.Top - from.Top) * eased;
+                Width = from.Width + (target.Width - from.Width) * eased;
+                Height = from.Height + (target.Height - from.Height) * eased;
+                if (progress < 1.0) return;
+                CompositionTarget.Rendering -= tick;
+                Left = target.Left; Top = target.Top; Width = target.Width; Height = target.Height;
+                _windowAnimating = false;
+                completed();
+            };
+            CompositionTarget.Rendering += tick;
         }
 
         private void SetMaxButtonIcon(bool isMaximized)
