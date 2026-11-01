@@ -434,11 +434,9 @@ namespace ETBTool
 
         private void Max_Click(object s, RoutedEventArgs e)
         {
-            var scaleAnim = new DoubleAnimation(0.98, 1.0, TimeSpan.FromMilliseconds(200))
-            {
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-
+            // 不再对整窗做 0.98→1 的缩放动画：窗口从还原到最大化时
+            // 内容区域一次性放大，缩放动画会让显卡重复合成整窗，反而显得卡顿。
+            // 交给系统原生窗口动画处理，最大化/还原更顺滑。
             if (WindowState == WindowState.Maximized)
             {
                 WindowState = WindowState.Normal;
@@ -449,14 +447,6 @@ namespace ETBTool
                 WindowState = WindowState.Maximized;
                 SetMaxButtonIcon(true);
             }
-
-            RootBorder.RenderTransformOrigin = new Point(0.5, 0.5);
-            if (RootBorder.RenderTransform is not ScaleTransform)
-                RootBorder.RenderTransform = new ScaleTransform();
-
-            var st = (ScaleTransform)RootBorder.RenderTransform;
-            st.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-            st.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
         }
 
         private void SetMaxButtonIcon(bool isMaximized)
