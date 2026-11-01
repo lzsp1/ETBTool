@@ -10,6 +10,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Interop;
+using System.Runtime.InteropServices;
 using ETBTool.Models;
 using ETBTool.Services;
 using ETBTool.Themes;
@@ -454,14 +456,60 @@ namespace ETBTool
             }
             else
             {
+                // 用窗口所在显示器的可用区域，而不是主显示器的工作区，
+                // 否则多显示器时最大化会跳到主屏。
                 _normalBounds = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
-                var area = SystemParameters.WorkArea;
+                var saved = _normalBounds;
+                var area = GetMonitorWorkArea();
                 AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () =>
                 {
                     WindowState = WindowState.Maximized;
                     SetMaxButtonIcon(true);
+                    // 切换为最大化后，用保存的普通尺寸覆盖 SizeChanged 可能写入的值，
+                    // 避免还原时窗口被拉长成整屏。
+                    _normalBounds = saved;
                 });
             }
+        }
+
+        private const uint MonitorDefaultToNearest = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeRect { public int Left, Top, Right, Bottom; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MonitorInfo
+        {
+            public int Size;
+            public NativeRect Monitor;
+            public NativeRect Work;
+            public uint Flags;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+        /// <summary>返回窗口当前所在显示器的可用区域（已换算成 WPF 的 DIP 坐标）。</summary>
+        private Rect GetMonitorWorkArea()
+        {
+            try
+            {
+                var handle = new WindowInteropHelper(this).Handle;
+                var monitor = MonitorFromWindow(handle, MonitorDefaultToNearest);
+                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
+                {
+                    var transform = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+                    var topLeft = transform.Transform(new Point(info.Work.Left, info.Work.Top));
+                    var bottomRight = transform.Transform(new Point(info.Work.Right, info.Work.Bottom));
+                    return new Rect(topLeft, bottomRight);
+                }
+            }
+            catch { }
+            return SystemParameters.WorkArea;
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -494,8 +542,10 @@ namespace ETBTool
                 if (progress < 1.0) return;
                 CompositionTarget.Rendering -= tick;
                 Left = target.Left; Top = target.Top; Width = target.Width; Height = target.Height;
-                _windowAnimating = false;
+                // 先执行回调再解除动画标记，避免回调里切换 WindowState 时
+                // SizeChanged 把普通尺寸覆盖成整屏尺寸。
                 completed();
+                _windowAnimating = false;
             };
             CompositionTarget.Rendering += tick;
         }
