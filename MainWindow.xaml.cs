@@ -37,6 +37,7 @@ namespace ETBTool
         private bool _retryUpdates;
         private bool _closingForUpdate;
         private bool _windowAnimating;
+        private bool _isMaximized;
         private Rect _normalBounds = Rect.Empty;
         private string _lastPromptedUpdate = "";
         private readonly CancellationTokenSource _updateLifetime = new();
@@ -52,6 +53,7 @@ namespace ETBTool
             Closed += CloseUpdateChecks;
             Loaded += OnLoaded;
             SizeChanged += Window_SizeChanged;
+            StateChanged += Window_StateChanged;
             LanguageManager.LanguageChanged += RefreshNav;
         }
 
@@ -439,36 +441,31 @@ namespace ETBTool
 
         private void Max_Click(object s, RoutedEventArgs e)
         {
-            // 用窗口自身的几何动画（Left/Top/Width/Height）做缓慢放大/缩小，
-            // 不再对整窗做 RenderTransform 缩放，避免大窗口重复合成导致掉帧。
+            // 用窗口自身的几何动画（Left/Top/Width/Height）做缓慢放大/缩小。
+            // 注意：这里不切换 WindowState.Maximized。窗口是 WindowStyle=None +
+            // WindowChrome，WPF 最大化时会给窗口加一圈补偿边框，导致底部/边缘出现
+            // 黑边，并且反复最大化/还原会让还原尺寸漂移。改为“普通窗口铺满当前
+            // 显示器的可用区域”，尺寸完全由我们控制，边框和高度都不会再跑偏。
             if (_windowAnimating) return;
+            if (WindowState == WindowState.Minimized) return;
 
-            if (WindowState == WindowState.Maximized)
+            if (_isMaximized)
             {
-                var target = _normalBounds.Width > 0 && _normalBounds.Height > 0
+                var fallbackArea = GetMonitorWorkArea();
+                var target = _normalBounds.Width >= MinWidth && _normalBounds.Height >= MinHeight
                     ? _normalBounds
-                    : new Rect(Left, Top, Math.Max(Width, 900), Math.Max(Height, 640));
-                var from = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
-                _windowAnimating = true;
-                WindowState = WindowState.Normal;
-                Left = from.Left; Top = from.Top; Width = from.Width; Height = from.Height;
+                    : new Rect(fallbackArea.Left + Math.Max(0, (fallbackArea.Width - 1100) / 2),
+                               fallbackArea.Top + Math.Max(0, (fallbackArea.Height - 720) / 2),
+                               Math.Min(1100, fallbackArea.Width), Math.Min(720, fallbackArea.Height));
+                _isMaximized = false;
                 AnimateWindowTo(target, () => SetMaxButtonIcon(false));
             }
             else
             {
-                // 用窗口所在显示器的可用区域，而不是主显示器的工作区，
-                // 否则多显示器时最大化会跳到主屏。
                 _normalBounds = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
-                var saved = _normalBounds;
                 var area = GetMonitorWorkArea();
-                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () =>
-                {
-                    WindowState = WindowState.Maximized;
-                    SetMaxButtonIcon(true);
-                    // 切换为最大化后，用保存的普通尺寸覆盖 SizeChanged 可能写入的值，
-                    // 避免还原时窗口被拉长成整屏。
-                    _normalBounds = saved;
-                });
+                _isMaximized = true;
+                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () => SetMaxButtonIcon(true));
             }
         }
 
@@ -512,9 +509,37 @@ namespace ETBTool
             return SystemParameters.WorkArea;
         }
 
+        private bool _syncingWindowState;
+
+        /// <summary>处理系统级最大化（Win+Up、标题栏菜单等），统一转成自带的最大化实现。</summary>
+        private void Window_StateChanged(object sender, EventArgs e)
+        {
+            if (_syncingWindowState) return;
+            if (WindowState == WindowState.Maximized)
+            {
+                var restore = RestoreBounds;
+                if (restore.Width >= MinWidth && restore.Height >= MinHeight) _normalBounds = restore;
+                _normalBounds = _normalBounds.Width >= MinWidth && _normalBounds.Height >= MinHeight
+                    ? _normalBounds
+                    : new Rect(Left, Top, Width, Height);
+                _syncingWindowState = true;
+                WindowState = WindowState.Normal;
+                _syncingWindowState = false;
+                var area = GetMonitorWorkArea();
+                Left = area.Left; Top = area.Top; Width = area.Width; Height = area.Height;
+                _isMaximized = true;
+                SetMaxButtonIcon(true);
+            }
+            else if (WindowState == WindowState.Normal && _isMaximized && !_windowAnimating)
+            {
+                _isMaximized = false;
+                SetMaxButtonIcon(false);
+            }
+        }
+
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (_windowAnimating || WindowState != WindowState.Normal) return;
+            if (_windowAnimating || _isMaximized || WindowState != WindowState.Normal) return;
             if (ActualWidth <= 0 || ActualHeight <= 0) return;
             _normalBounds = new Rect(Left, Top, ActualWidth, ActualHeight);
         }
