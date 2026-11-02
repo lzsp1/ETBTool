@@ -36,7 +36,10 @@
                             Click="Web_Click" Margin="0,0,0,8"
                             HorizontalAlignment="Stretch"/>
 					<Button x:Name="BtnSource" Style="{StaticResource BaseButton}"
-                            Click="Source_Click"
+                            Click="Source_Click" Margin="0,0,0,8"
+                            HorizontalAlignment="Stretch"/>
+					<Button x:Name="BtnGuide" Style="{StaticResource BaseButton}"
+                            Click="Guide_Click"
                             HorizontalAlignment="Stretch"/>
 				</StackPanel>
 			</Border>

@@ -178,6 +178,7 @@ namespace ETBTool.Views
                 if (HMod != null) HMod.Text = LanguageManager.ModMgrHMod;
                 if (BtnUp != null) BtnUp.Content = LanguageManager.ModMgrUp;
                 if (BtnRefresh != null) BtnRefresh.Content = LanguageManager.ModMgrRefresh;
+        if (BtnSubmitName != null) BtnSubmitName.Content = LanguageManager.IsChinese ? "提交 Mod 名称" : "Submit mod name";
                 if (BtnImport != null) BtnImport.Content = LanguageManager.ModMgrImport;
                 if (BtnPack != null) BtnPack.Content = LanguageManager.ModMgrPack;
                 if (BtnDel != null) BtnDel.Content = LanguageManager.ModMgrDelete;
@@ -431,6 +432,11 @@ namespace ETBTool.Views
                 await LoadDirectoryAsync(_currentDir);
             }
             catch (Exception ex) { ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteFailed(ex.Message), LanguageManager.ModMgrDeleteTitle); }
+        }
+
+        private void SubmitName(object s, RoutedEventArgs e)
+        {
+            ExternalLauncher.OpenWebsite("https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg");
         }
 
         private async void Toggle(object s, RoutedEventArgs e)

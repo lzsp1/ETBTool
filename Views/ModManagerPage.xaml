@@ -85,6 +85,7 @@
 					<TextBlock x:Name="LblActions" Style="{StaticResource SectionTitle}"/>
 					<Button x:Name="ToggleBtn" Style="{StaticResource BaseButton}" Click="Toggle" HorizontalAlignment="Left" Margin="0,0,0,12"/>
 					<TextBlock x:Name="TranslationState" Foreground="{DynamicResource TextSecondary}" TextWrapping="Wrap"/>
+					<Button x:Name="BtnSubmitName" Style="{StaticResource BaseButton}" Click="SubmitName" HorizontalAlignment="Left" Margin="0,12,0,0"/>
 				</StackPanel>
 			</Border>
 		</StackPanel>

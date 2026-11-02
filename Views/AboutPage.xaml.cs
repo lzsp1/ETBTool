@@ -28,6 +28,7 @@ namespace ETBTool.Views
             BtnConfig.ToolTip = GamePaths.AppConfigPath;
             BtnWebsite.Content = LanguageManager.BtnWebsite;
             BtnSource.Content = LanguageManager.BtnSource;
+        BtnGuide.Content = LanguageManager.IsChinese ? "工具使用说明" : "User Guide";
         }
 
         private void Config_Click(object s, RoutedEventArgs e)
@@ -38,6 +39,11 @@ namespace ETBTool.Views
         private void Web_Click(object s, RoutedEventArgs e)
         {
             ExternalLauncher.OpenWebsite(GamePaths.OfficialWebsite);
+        }
+
+        private void Guide_Click(object s, RoutedEventArgs e)
+        {
+            ExternalLauncher.OpenWebsite("https://acnq9mbub8ek.feishu.cn/wiki/BkWNwcleiiGIuwkFqLYcLcoXnXf");
         }
 
         private void Source_Click(object s, RoutedEventArgs e)
