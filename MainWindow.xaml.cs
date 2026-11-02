@@ -54,6 +54,7 @@ namespace ETBTool
             Closed += CloseUpdateChecks;
             Loaded += OnLoaded;
             SizeChanged += Window_SizeChanged;
+            SourceInitialized += Window_SourceInitialized;
             StateChanged += Window_StateChanged;
             LanguageManager.LanguageChanged += RefreshNav;
         }
@@ -479,6 +480,59 @@ namespace ETBTool
                     Topmost = true;
                 });
             }
+        }
+
+        private const int WmGetMinMaxInfo = 0x0024;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativePoint { public int X, Y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeMinMaxInfo
+        {
+            public NativePoint Reserved;
+            public NativePoint MaxSize;
+            public NativePoint MaxPosition;
+            public NativePoint MinTrackSize;
+            public NativePoint MaxTrackSize;
+        }
+
+        private void Window_SourceInitialized(object? sender, EventArgs e)
+        {
+            if (PresentationSource.FromVisual(this) is HwndSource source) source.AddHook(WindowProc);
+        }
+
+        /// <summary>
+        /// 默认的窗口最大跟踪尺寸是“工作区”（不含任务栏），会导致铺满屏幕时被系统
+        /// 压回工作区高度。这里把上限改成整块显示器区域，最大化才能真正铺满。
+        /// </summary>
+        private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg != WmGetMinMaxInfo) return IntPtr.Zero;
+            try
+            {
+                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+                var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
+                {
+                    var width = info.Monitor.Right - info.Monitor.Left;
+                    var height = info.Monitor.Bottom - info.Monitor.Top;
+                    if (width > 0 && height > 0)
+                    {
+                        var mmi = Marshal.PtrToStructure<NativeMinMaxInfo>(lParam);
+                        mmi.MaxTrackSize.X = width;
+                        mmi.MaxTrackSize.Y = height;
+                        mmi.MaxSize.X = width;
+                        mmi.MaxSize.Y = height;
+                        mmi.MaxPosition.X = 0;
+                        mmi.MaxPosition.Y = 0;
+                        Marshal.StructureToPtr(mmi, lParam, false);
+                        handled = true;
+                    }
+                }
+            }
+            catch { }
+            return IntPtr.Zero;
         }
 
         private const uint MonitorDefaultToNearest = 2;

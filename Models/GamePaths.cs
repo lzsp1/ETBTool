@@ -34,7 +34,7 @@ namespace ETBTool.Models
             "https://taolihoushiwanyouqun.wordpress.com/";
         public static string SourceCodeUrl =>
             "https://github.com/lzsp1/ETBTool";
-        public const string DisplayVersion = "26.11.021";
+        public const string DisplayVersion = "26.11.022";
         public const string SteamAppId = "1943950";
 
         public static string SteamGameUri => $"steam://rungameid/{SteamAppId}";
