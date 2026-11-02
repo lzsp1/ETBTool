@@ -38,6 +38,7 @@ namespace ETBTool
         private bool _closingForUpdate;
         private bool _windowAnimating;
         private bool _isMaximized;
+        private bool _wasTopmost;
         private Rect _normalBounds = Rect.Empty;
         private string _lastPromptedUpdate = "";
         private readonly CancellationTokenSource _updateLifetime = new();
@@ -458,14 +459,25 @@ namespace ETBTool
                                fallbackArea.Top + Math.Max(0, (fallbackArea.Height - 720) / 2),
                                Math.Min(1100, fallbackArea.Width), Math.Min(720, fallbackArea.Height));
                 _isMaximized = false;
-                AnimateWindowTo(target, () => SetMaxButtonIcon(false));
+                AnimateWindowTo(target, () =>
+                {
+                    SetMaxButtonIcon(false);
+                    Topmost = _wasTopmost;
+                });
             }
             else
             {
                 _normalBounds = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
-                var area = GetMonitorWorkArea();
+                // 铺满整块屏幕（含任务栏区域），期间临时置顶，避免任务栏压住窗口底部。
+                var area = GetMonitorBounds();
+                _wasTopmost = Topmost;
+                Topmost = true;
                 _isMaximized = true;
-                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () => SetMaxButtonIcon(true));
+                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () =>
+                {
+                    SetMaxButtonIcon(true);
+                    Topmost = true;
+                });
             }
         }
 
@@ -488,6 +500,27 @@ namespace ETBTool
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+        /// <summary>返回窗口当前所在显示器的完整区域（含任务栏，已换算成 DIP）。</summary>
+        private Rect GetMonitorBounds()
+        {
+            try
+            {
+                var handle = new WindowInteropHelper(this).Handle;
+                var monitor = MonitorFromWindow(handle, MonitorDefaultToNearest);
+                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
+                {
+                    var transform = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
+                    var topLeft = transform.Transform(new Point(info.Monitor.Left, info.Monitor.Top));
+                    var bottomRight = transform.Transform(new Point(info.Monitor.Right, info.Monitor.Bottom));
+                    return new Rect(topLeft, bottomRight);
+                }
+            }
+            catch { }
+            var wa = SystemParameters.WorkArea;
+            return new Rect(wa.Left, wa.Top, wa.Width, wa.Height);
+        }
 
         /// <summary>返回窗口当前所在显示器的可用区域（已换算成 WPF 的 DIP 坐标）。</summary>
         private Rect GetMonitorWorkArea()
@@ -525,7 +558,9 @@ namespace ETBTool
                 _syncingWindowState = true;
                 WindowState = WindowState.Normal;
                 _syncingWindowState = false;
-                var area = GetMonitorWorkArea();
+                var area = GetMonitorBounds();
+                _wasTopmost = Topmost;
+                Topmost = true;
                 Left = area.Left; Top = area.Top; Width = area.Width; Height = area.Height;
                 _isMaximized = true;
                 SetMaxButtonIcon(true);

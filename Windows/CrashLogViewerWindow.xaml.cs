@@ -23,7 +23,7 @@ namespace ETBTool.Windows
 
             try
             {
-                _content = File.ReadAllText(filePath);
+                _content = TextFileReader.ReadAllText(filePath);
                 ContentBox.Text = _content;
                 ContentBox.ScrollToHome();
             }
