@@ -483,6 +483,21 @@ namespace ETBTool
         }
 
         private const int WmGetMinMaxInfo = 0x0024;
+        private const int WmWindowPosChanging = 0x0046;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeWindowPos
+        {
+            public IntPtr Hwnd;
+            public IntPtr HwndInsertAfter;
+            public int X;
+            public int Y;
+            public int Width;
+            public int Height;
+            public uint Flags;
+        }
+
+
 
         [StructLayout(LayoutKind.Sequential)]
         private struct NativePoint { public int X, Y; }
@@ -508,6 +523,32 @@ namespace ETBTool
         /// </summary>
         private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            if (msg == WmWindowPosChanging)
+            {
+                // 最大化且动画结束后，强制窗口覆盖整块显示器区域。
+                // 某些 DPI/多屏组合下，系统仍会把窗口压回工作区，这里直接改写
+                // WINDOWPOS，保证底部不会留出空白。
+                if (_isMaximized && !_windowAnimating)
+                {
+                    try
+                    {
+                        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+                        var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+                        if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
+                        {
+                            var pos = Marshal.PtrToStructure<NativeWindowPos>(lParam);
+                            pos.X = info.Monitor.Left;
+                            pos.Y = info.Monitor.Top;
+                            pos.Width = info.Monitor.Right - info.Monitor.Left;
+                            pos.Height = info.Monitor.Bottom - info.Monitor.Top;
+                            Marshal.StructureToPtr(pos, lParam, false);
+                            handled = true;
+                        }
+                    }
+                    catch { }
+                }
+                return IntPtr.Zero;
+            }
             if (msg != WmGetMinMaxInfo) return IntPtr.Zero;
             try
             {
