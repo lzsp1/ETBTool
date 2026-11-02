@@ -3,7 +3,7 @@
 **逃离后室（Escape the Backrooms）游戏辅助工具**
 - [English Version](https://github.com/lzsp1/ETBTool/blob/main/README.en.md)
 
-![Version](https://img.shields.io/badge/version-26.10.301-blue)
+![Version](https://img.shields.io/badge/version-26.11.311-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple)
@@ -39,6 +39,9 @@
 | **UE4 管理** | 浏览游戏安装目录（Win64），支持导入文件、删除、一键清空后跳转 Steam |
 | **Mod 管理** | 安装、禁用（`.disabled` 后缀）、翻译、打包（ZIP + 信息文档），支持 `Ctrl+点击` 多选 |
 | **下载 Mod** | 内置模组库：搜索、分类、分页、详情与预览图；下载可选「本站下载」或「直链下载」（浏览器打开）；先暂存到临时目录，完成后自动安装 / 另存 / 保留 |
+| **前置资源** | 模组详情显示前置资源（名称/版本）与「前往下载」跳转，列表对含前置的模组加「含前置」标记 |
+| **文本读取** | 自动识别 UTF-8 / UTF-16 / GB18030(GBK) 编码，中文日志与文件名不再乱码 |
+| **窗口** | 最大化/还原使用系统原生行为，多显示器与不同 DPI 下尺寸稳定，不产生黑边或高度漂移 |
 | **查看路径** | 一键查看并复制存档、崩溃日志、游戏安装、Mod 安装路径 |
 | **日志** | 实时查看操作日志 |
 | **设置** | 6 种主题风格、浅色/深色/跟随系统、自定义强调色、背景图片、自定义路径 |

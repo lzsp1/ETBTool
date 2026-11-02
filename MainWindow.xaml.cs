@@ -36,10 +36,6 @@ namespace ETBTool
         private bool _updateInProgress;
         private bool _retryUpdates;
         private bool _closingForUpdate;
-        private bool _windowAnimating;
-        private bool _isMaximized;
-        private bool _wasTopmost;
-        private Rect _normalBounds = Rect.Empty;
         private string _lastPromptedUpdate = "";
         private readonly CancellationTokenSource _updateLifetime = new();
         private readonly System.Windows.Threading.DispatcherTimer _updateRetryTimer = new();
@@ -53,9 +49,6 @@ namespace ETBTool
             NetworkChange.NetworkAddressChanged += UpdateNetworkAddressChanged;
             Closed += CloseUpdateChecks;
             Loaded += OnLoaded;
-            SizeChanged += Window_SizeChanged;
-            SourceInitialized += Window_SourceInitialized;
-            StateChanged += Window_StateChanged;
             LanguageManager.LanguageChanged += RefreshNav;
         }
 
@@ -443,266 +436,19 @@ namespace ETBTool
 
         private void Max_Click(object s, RoutedEventArgs e)
         {
-            // 用窗口自身的几何动画（Left/Top/Width/Height）做缓慢放大/缩小。
-            // 注意：这里不切换 WindowState.Maximized。窗口是 WindowStyle=None +
-            // WindowChrome，WPF 最大化时会给窗口加一圈补偿边框，导致底部/边缘出现
-            // 黑边，并且反复最大化/还原会让还原尺寸漂移。改为“普通窗口铺满当前
-            // 显示器的可用区域”，尺寸完全由我们控制，边框和高度都不会再跑偏。
-            if (_windowAnimating) return;
-            if (WindowState == WindowState.Minimized) return;
-
-            if (_isMaximized)
-            {
-                var fallbackArea = GetMonitorWorkArea();
-                var target = _normalBounds.Width >= MinWidth && _normalBounds.Height >= MinHeight
-                    ? _normalBounds
-                    : new Rect(fallbackArea.Left + Math.Max(0, (fallbackArea.Width - 1100) / 2),
-                               fallbackArea.Top + Math.Max(0, (fallbackArea.Height - 720) / 2),
-                               Math.Min(1100, fallbackArea.Width), Math.Min(720, fallbackArea.Height));
-                _isMaximized = false;
-                AnimateWindowTo(target, () =>
-                {
-                    SetMaxButtonIcon(false);
-                    Topmost = _wasTopmost;
-                });
-            }
-            else
-            {
-                _normalBounds = new Rect(Left, Top, ActualWidth > 0 ? ActualWidth : Width, ActualHeight > 0 ? ActualHeight : Height);
-                // 铺满整块屏幕（含任务栏区域），期间临时置顶，避免任务栏压住窗口底部。
-                var area = GetMonitorBounds();
-                _wasTopmost = Topmost;
-                Topmost = true;
-                _isMaximized = true;
-                AnimateWindowTo(new Rect(area.Left, area.Top, area.Width, area.Height), () =>
-                {
-                    SetMaxButtonIcon(true);
-                    Topmost = true;
-                });
-            }
-        }
-
-        private const int WmGetMinMaxInfo = 0x0024;
-        private const int WmWindowPosChanging = 0x0046;
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct NativeWindowPos
-        {
-            public IntPtr Hwnd;
-            public IntPtr HwndInsertAfter;
-            public int X;
-            public int Y;
-            public int Width;
-            public int Height;
-            public uint Flags;
-        }
-
-
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct NativePoint { public int X, Y; }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct NativeMinMaxInfo
-        {
-            public NativePoint Reserved;
-            public NativePoint MaxSize;
-            public NativePoint MaxPosition;
-            public NativePoint MinTrackSize;
-            public NativePoint MaxTrackSize;
-        }
-
-        private void Window_SourceInitialized(object? sender, EventArgs e)
-        {
-            if (PresentationSource.FromVisual(this) is HwndSource source) source.AddHook(WindowProc);
-        }
-
-        /// <summary>
-        /// 默认的窗口最大跟踪尺寸是“工作区”（不含任务栏），会导致铺满屏幕时被系统
-        /// 压回工作区高度。这里把上限改成整块显示器区域，最大化才能真正铺满。
-        /// </summary>
-        private IntPtr WindowProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (msg == WmWindowPosChanging)
-            {
-                // 最大化且动画结束后，强制窗口覆盖整块显示器区域。
-                // 某些 DPI/多屏组合下，系统仍会把窗口压回工作区，这里直接改写
-                // WINDOWPOS，保证底部不会留出空白。
-                if (_isMaximized && !_windowAnimating)
-                {
-                    try
-                    {
-                        var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-                        var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
-                        if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
-                        {
-                            var pos = Marshal.PtrToStructure<NativeWindowPos>(lParam);
-                            pos.X = info.Monitor.Left;
-                            pos.Y = info.Monitor.Top;
-                            pos.Width = info.Monitor.Right - info.Monitor.Left;
-                            pos.Height = info.Monitor.Bottom - info.Monitor.Top;
-                            Marshal.StructureToPtr(pos, lParam, false);
-                            handled = true;
-                        }
-                    }
-                    catch { }
-                }
-                return IntPtr.Zero;
-            }
-            if (msg != WmGetMinMaxInfo) return IntPtr.Zero;
-            try
-            {
-                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-                var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
-                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
-                {
-                    var width = info.Monitor.Right - info.Monitor.Left;
-                    var height = info.Monitor.Bottom - info.Monitor.Top;
-                    if (width > 0 && height > 0)
-                    {
-                        var mmi = Marshal.PtrToStructure<NativeMinMaxInfo>(lParam);
-                        mmi.MaxTrackSize.X = width;
-                        mmi.MaxTrackSize.Y = height;
-                        mmi.MaxSize.X = width;
-                        mmi.MaxSize.Y = height;
-                        mmi.MaxPosition.X = 0;
-                        mmi.MaxPosition.Y = 0;
-                        Marshal.StructureToPtr(mmi, lParam, false);
-                        handled = true;
-                    }
-                }
-            }
-            catch { }
-            return IntPtr.Zero;
-        }
-
-        private const uint MonitorDefaultToNearest = 2;
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct NativeRect { public int Left, Top, Right, Bottom; }
-
-        [StructLayout(LayoutKind.Sequential)]
-        private struct MonitorInfo
-        {
-            public int Size;
-            public NativeRect Monitor;
-            public NativeRect Work;
-            public uint Flags;
-        }
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
-
-        /// <summary>返回窗口当前所在显示器的完整区域（含任务栏，已换算成 DIP）。</summary>
-        private Rect GetMonitorBounds()
-        {
-            try
-            {
-                var handle = new WindowInteropHelper(this).Handle;
-                var monitor = MonitorFromWindow(handle, MonitorDefaultToNearest);
-                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
-                {
-                    var transform = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
-                    var topLeft = transform.Transform(new Point(info.Monitor.Left, info.Monitor.Top));
-                    var bottomRight = transform.Transform(new Point(info.Monitor.Right, info.Monitor.Bottom));
-                    return new Rect(topLeft, bottomRight);
-                }
-            }
-            catch { }
-            var wa = SystemParameters.WorkArea;
-            return new Rect(wa.Left, wa.Top, wa.Width, wa.Height);
-        }
-
-        /// <summary>返回窗口当前所在显示器的可用区域（已换算成 WPF 的 DIP 坐标）。</summary>
-        private Rect GetMonitorWorkArea()
-        {
-            try
-            {
-                var handle = new WindowInteropHelper(this).Handle;
-                var monitor = MonitorFromWindow(handle, MonitorDefaultToNearest);
-                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
-                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
-                {
-                    var transform = PresentationSource.FromVisual(this)?.CompositionTarget?.TransformFromDevice ?? Matrix.Identity;
-                    var topLeft = transform.Transform(new Point(info.Work.Left, info.Work.Top));
-                    var bottomRight = transform.Transform(new Point(info.Work.Right, info.Work.Bottom));
-                    return new Rect(topLeft, bottomRight);
-                }
-            }
-            catch { }
-            return SystemParameters.WorkArea;
-        }
-
-        private bool _syncingWindowState;
-
-        /// <summary>处理系统级最大化（Win+Up、标题栏菜单等），统一转成自带的最大化实现。</summary>
-        private void Window_StateChanged(object sender, EventArgs e)
-        {
-            if (_syncingWindowState) return;
+            // 使用系统原生最大化：由 Windows 处理工作区尺寸、多显示器与 DPI 切换，
+            // 窗口不会留下黑边，也不会在还原时改变尺寸。
             if (WindowState == WindowState.Maximized)
-            {
-                var restore = RestoreBounds;
-                if (restore.Width >= MinWidth && restore.Height >= MinHeight) _normalBounds = restore;
-                _normalBounds = _normalBounds.Width >= MinWidth && _normalBounds.Height >= MinHeight
-                    ? _normalBounds
-                    : new Rect(Left, Top, Width, Height);
-                _syncingWindowState = true;
                 WindowState = WindowState.Normal;
-                _syncingWindowState = false;
-                var area = GetMonitorBounds();
-                _wasTopmost = Topmost;
-                Topmost = true;
-                Left = area.Left; Top = area.Top; Width = area.Width; Height = area.Height;
-                _isMaximized = true;
-                SetMaxButtonIcon(true);
-            }
-            else if (WindowState == WindowState.Normal && _isMaximized && !_windowAnimating)
-            {
-                _isMaximized = false;
-                SetMaxButtonIcon(false);
-            }
+            else
+                WindowState = WindowState.Maximized;
+            SetMaxButtonIcon(WindowState == WindowState.Maximized);
         }
 
-        private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void Window_StateChanged(object? sender, EventArgs e)
         {
-            if (_windowAnimating || _isMaximized || WindowState != WindowState.Normal) return;
-            if (ActualWidth <= 0 || ActualHeight <= 0) return;
-            _normalBounds = new Rect(Left, Top, ActualWidth, ActualHeight);
-        }
-
-        private void AnimateWindowTo(Rect target, Action completed)
-        {
-            _windowAnimating = true;
-            var from = new Rect(Left, Top,
-                ActualWidth > 0 ? ActualWidth : Width,
-                ActualHeight > 0 ? ActualHeight : Height);
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-            const double durationMs = 320.0;
-            EventHandler? tick = null;
-            tick = (_, _) =>
-            {
-                var progress = Math.Min(1.0, watch.Elapsed.TotalMilliseconds / durationMs);
-                // easeInOutCubic：起步和收尾都更柔和，中段不至于显得“弹”。
-                var eased = progress < 0.5
-                    ? 4 * progress * progress * progress
-                    : 1 - Math.Pow(-2 * progress + 2, 3) / 2;
-                Left = from.Left + (target.Left - from.Left) * eased;
-                Top = from.Top + (target.Top - from.Top) * eased;
-                Width = from.Width + (target.Width - from.Width) * eased;
-                Height = from.Height + (target.Height - from.Height) * eased;
-                if (progress < 1.0) return;
-                CompositionTarget.Rendering -= tick;
-                Left = target.Left; Top = target.Top; Width = target.Width; Height = target.Height;
-                // 先执行回调再解除动画标记，避免回调里切换 WindowState 时
-                // SizeChanged 把普通尺寸覆盖成整屏尺寸。
-                completed();
-                _windowAnimating = false;
-            };
-            CompositionTarget.Rendering += tick;
+            if (WindowState == WindowState.Minimized) return;
+            SetMaxButtonIcon(WindowState == WindowState.Maximized);
         }
 
         private void SetMaxButtonIcon(bool isMaximized)

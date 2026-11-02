@@ -44,6 +44,9 @@
 | **Settings** | 6 theme styles, Light / Dark / System-follow modes, custom accent color, custom background image, custom file paths |
 | **About** | Project info, open config directory, official website, source repository |
 | **Update Check** | Auto / manual new version detection, forced update supported. When download is blocked (HTTP 404), prompt to use mirror link and support manual ZIP installation via "Select File" |
+| **Prerequisites** | Mod detail lists prerequisite mods (name/version) with a jump link; list cards show a "Has prerequisites" badge |
+| **Text Encoding** | Auto-detects UTF-8 / UTF-16 / GB18030(GBK), so Chinese logs and file names no longer turn into question marks |
+| **Window** | Native maximize/restore, stable across multiple monitors and DPI scaling, no black borders or height drift |
 
 ---
 
