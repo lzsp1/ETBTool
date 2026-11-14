@@ -3,7 +3,7 @@
 **逃离后室（Escape the Backrooms）游戏辅助工具**
 - [English Version](https://github.com/lzsp1/ETBTool/blob/main/README.en.md)
 
-![Version](https://img.shields.io/badge/version-26.11.311-blue)
+![Version](https://img.shields.io/badge/version-26.11.141-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple)
