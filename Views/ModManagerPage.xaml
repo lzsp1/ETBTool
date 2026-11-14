@@ -76,6 +76,7 @@
 						<Button x:Name="BtnRefresh" Style="{StaticResource AccentButton}" Click="Refresh" Margin="0,0,8,0"/>
 						<Button x:Name="BtnImport" Style="{StaticResource BaseButton}" Click="Import" Margin="0,0,8,0"/>
 						<Button x:Name="BtnPack" Style="{StaticResource BaseButton}" Click="Pack" Margin="0,0,8,0"/>
+						<Button x:Name="BtnTranslationSubmit" Style="{StaticResource BaseButton}" Click="SubmitTranslation" Margin="0,0,8,0"/>
 						<Button x:Name="BtnDel" Style="{StaticResource DangerButton}" Click="Del"/>
 					</WrapPanel>
 				</StackPanel>

@@ -102,7 +102,8 @@ namespace ETBTool.Views
                     {
                         Logger.Log("ModManagerPage: Loaded start");
                         var translations = _translation.LoadAsync();
-                        await LoadDirectoryAsync(_currentDir);
+                        EnsureModFolders();
+                await LoadDirectoryAsync(_currentDir);
                         await translations;
                         Logger.Log("ModManagerPage: Translation loaded OK");
                         Logger.Log("ModManagerPage: Directory loaded OK");
@@ -160,6 +161,11 @@ namespace ETBTool.Views
             catch { }
         }
 
+        private void SubmitTranslation(object s, RoutedEventArgs e)
+        {
+            ExternalLauncher.OpenWebsite("https://acnq9mbub8ek.feishu.cn/share/base/form/shrcnU6cBUdmrLjyKxltPlcwweg");
+        }
+
         private void RefreshText()
         {
             try
@@ -181,6 +187,7 @@ namespace ETBTool.Views
         if (BtnSubmitName != null) BtnSubmitName.Content = LanguageManager.IsChinese ? "提交 Mod 名称" : "Submit mod name";
                 if (BtnImport != null) BtnImport.Content = LanguageManager.ModMgrImport;
                 if (BtnPack != null) BtnPack.Content = LanguageManager.ModMgrPack;
+            if (BtnTranslationSubmit != null) BtnTranslationSubmit.Content = LanguageManager.IsChinese ? "MOD 翻译提交" : "Submit mod translation";
                 if (BtnDel != null) BtnDel.Content = LanguageManager.ModMgrDelete;
                 if (LblActions != null) LblActions.Text = LanguageManager.ModMgrActions;
                 UpdateToggleBtn();
@@ -202,6 +209,23 @@ namespace ETBTool.Views
                 BtnPack.IsEnabled = !_operating && selected.Length > 0;
             }
             catch { }
+        }
+
+        /// <summary>进入 Mod 管理时确保 Paks/LogicMods 目录存在，避免没有文件夹时无法安装或打包。</summary>
+        private void EnsureModFolders()
+        {
+            try
+            {
+                var modPath = GamePaths.ModPath;
+                if (string.IsNullOrWhiteSpace(modPath)) return;
+                if (!Directory.Exists(modPath)) Directory.CreateDirectory(modPath);
+                var logicMods = Path.Combine(modPath, "LogicMods");
+                if (!Directory.Exists(logicMods)) Directory.CreateDirectory(logicMods);
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"EnsureModFolders failed: {ex.Message}");
+            }
         }
 
         private async Task LoadDirectoryAsync(string path)
@@ -358,6 +382,7 @@ namespace ETBTool.Views
         private async void Refresh(object s, RoutedEventArgs e)
         {
             if (_operating) return;
+            EnsureModFolders();
             var translations = _translation.LoadAsync();
             await LoadDirectoryAsync(_currentDir);
             await translations;

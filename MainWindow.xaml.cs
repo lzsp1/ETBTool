@@ -49,6 +49,7 @@ namespace ETBTool
             NetworkChange.NetworkAddressChanged += UpdateNetworkAddressChanged;
             Closed += CloseUpdateChecks;
             Loaded += OnLoaded;
+            SourceInitialized += Window_SourceInitializedForMaximize;
             LanguageManager.LanguageChanged += RefreshNav;
         }
 
@@ -434,6 +435,78 @@ namespace ETBTool
 
         private void Min_Click(object s, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
+        private const int WmGetMinMaxInfo = 0x0024;
+        private const uint MonitorDefaultToNearest = 2;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativePoint { public int X, Y; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeRect { public int Left, Top, Right, Bottom; }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MonitorInfo
+        {
+            public int Size;
+            public NativeRect Monitor;
+            public NativeRect Work;
+            public uint Flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct NativeMinMaxInfo
+        {
+            public NativePoint Reserved;
+            public NativePoint MaxSize;
+            public NativePoint MaxPosition;
+            public NativePoint MinTrackSize;
+            public NativePoint MaxTrackSize;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+
+        private void Window_SourceInitializedForMaximize(object? sender, EventArgs e)
+        {
+            if (PresentationSource.FromVisual(this) is HwndSource source) source.AddHook(MaximizeProc);
+        }
+
+        /// <summary>
+        /// 让原生最大化按“工作区”计算（任务栏可见），而不是整块显示器。
+        /// 这样底部菜单不会被任务栏盖住，也不会出现黑边。
+        /// </summary>
+        private IntPtr MaximizeProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg != WmGetMinMaxInfo) return IntPtr.Zero;
+            try
+            {
+                var monitor = MonitorFromWindow(hwnd, MonitorDefaultToNearest);
+                var info = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+                if (monitor != IntPtr.Zero && GetMonitorInfo(monitor, ref info))
+                {
+                    var workWidth = info.Work.Right - info.Work.Left;
+                    var workHeight = info.Work.Bottom - info.Work.Top;
+                    if (workWidth > 0 && workHeight > 0)
+                    {
+                        var mmi = Marshal.PtrToStructure<NativeMinMaxInfo>(lParam);
+                        mmi.MaxSize.X = workWidth;
+                        mmi.MaxSize.Y = workHeight;
+                        mmi.MaxPosition.X = info.Work.Left - info.Monitor.Left;
+                        mmi.MaxPosition.Y = info.Work.Top - info.Monitor.Top;
+                        mmi.MaxTrackSize.X = workWidth;
+                        mmi.MaxTrackSize.Y = workHeight;
+                        Marshal.StructureToPtr(mmi, lParam, false);
+                        handled = true;
+                    }
+                }
+            }
+            catch { }
+            return IntPtr.Zero;
+        }
+
         private void Max_Click(object s, RoutedEventArgs e)
         {
             // 使用系统原生最大化：由 Windows 处理工作区尺寸、多显示器与 DPI 切换，
@@ -448,7 +521,36 @@ namespace ETBTool
         private void Window_StateChanged(object? sender, EventArgs e)
         {
             if (WindowState == WindowState.Minimized) return;
-            SetMaxButtonIcon(WindowState == WindowState.Maximized);
+            var maximized = WindowState == WindowState.Maximized;
+            SetMaxButtonIcon(maximized);
+            AnimateWindowTransition(maximized);
+        }
+
+        /// <summary>
+        /// 最大化/还原时的过渡动画：只对窗口内容做轻微的缩放+淡入，
+        /// 不改变窗口真实尺寸，因此不会影响多显示器工作区和还原比例。
+        /// </summary>
+        private void AnimateWindowTransition(bool maximizing)
+        {
+            var duration = TimeSpan.FromMilliseconds(maximizing ? 200 : 160);
+            var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+            RootBorder.RenderTransformOrigin = new Point(0.5, 0.5);
+            if (RootBorder.RenderTransform is not ScaleTransform scale)
+            {
+                scale = new ScaleTransform(1, 1);
+                RootBorder.RenderTransform = scale;
+            }
+
+            // 动画期间缓存内容位图，避免整窗重复布局/绘制造成掉帧。
+            RootBorder.CacheMode = new BitmapCache(1.0);
+
+            var zoom = new DoubleAnimation(maximizing ? 0.985 : 0.992, 1.0, duration) { EasingFunction = ease };
+            var fade = new DoubleAnimation(maximizing ? 0.9 : 0.95, 1.0, duration) { EasingFunction = ease };
+            fade.Completed += (_, _) => RootBorder.CacheMode = null;
+            scale.BeginAnimation(ScaleTransform.ScaleXProperty, zoom);
+            scale.BeginAnimation(ScaleTransform.ScaleYProperty, zoom);
+            RootBorder.BeginAnimation(UIElement.OpacityProperty, fade);
         }
 
         private void SetMaxButtonIcon(bool isMaximized)
