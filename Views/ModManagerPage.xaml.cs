@@ -448,12 +448,29 @@ namespace ETBTool.Views
         {
             try
             {
-                var sel = ModListBox.SelectedItem as ModEntry;
-                if (sel == null) { Toast.Show(LanguageManager.ModMgrNoSelection, ToastType.Info); return; }
-                var result = ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteConfirm(sel.FileName), LanguageManager.ModMgrDeleteTitle, MessageBoxButton.YesNo);
+                var selected = ModListBox.SelectedItems.Cast<ModEntry>().ToArray();
+                if (selected.Length == 0) { Toast.Show(LanguageManager.ModMgrNoSelection, ToastType.Info); return; }
+                var target = selected.Length == 1
+                    ? selected[0].FileName
+                    : (LanguageManager.IsChinese ? $"所选的 {selected.Length} 个项目" : $"{selected.Length} selected items");
+                var result = ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteConfirm(target), LanguageManager.ModMgrDeleteTitle, MessageBoxButton.YesNo);
                 if (result != MessageBoxResult.Yes) return;
-                if (sel.IsDirectory) Directory.Delete(sel.FullPath, true); else File.Delete(sel.FullPath);
-                Toast.Show(LanguageManager.ModMgrDeleteSuccess, ToastType.Success);
+                var failed = 0;
+                foreach (var sel in selected)
+                {
+                    try
+                    {
+                        if (sel.IsDirectory) Directory.Delete(sel.FullPath, true);
+                        else if (File.Exists(sel.FullPath)) File.Delete(sel.FullPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        failed++;
+                        Logger.Log($"Delete failed: {sel.FullPath}: {ex.Message}");
+                    }
+                }
+                if (failed == 0) Toast.Show(LanguageManager.ModMgrDeleteSuccess, ToastType.Success);
+                else Toast.Show(LanguageManager.IsChinese ? $"已删除 {selected.Length - failed} 个，{failed} 个失败（详见日志）" : $"Deleted {selected.Length - failed}, {failed} failed (see log)", ToastType.Error);
                 await LoadDirectoryAsync(_currentDir);
             }
             catch (Exception ex) { ThemedDialog.Show(Window.GetWindow(this), LanguageManager.ModMgrDeleteFailed(ex.Message), LanguageManager.ModMgrDeleteTitle); }

@@ -93,11 +93,11 @@
 		<Setter Property="Template">
 			<Setter.Value>
 				<ControlTemplate TargetType="RadioButton">
-					<Border x:Name="bd" Background="{TemplateBinding Background}"
+					<Border x:Name="bd" Background="{TemplateBinding Background}" MinHeight="42"
                             CornerRadius="6" Padding="{TemplateBinding Padding}" Margin="0,2">
                         <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition x:Name="IconColumn" Width="28"/>
+                                <ColumnDefinition x:Name="IconColumn" Width="28" MinWidth="28"/>
                                 <ColumnDefinition x:Name="LabelColumn" Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="NavIcon" Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -107,9 +107,7 @@
 					<ControlTemplate.Triggers>
                         <DataTrigger Binding="{Binding IsNavigationExpanded, RelativeSource={RelativeSource AncestorType={x:Type Window}}}" Value="False">
                             <Setter TargetName="NavLabel" Property="Visibility" Value="Collapsed"/>
-                            <Setter TargetName="IconColumn" Property="Width" Value="*"/>
                             <Setter TargetName="LabelColumn" Property="Width" Value="0"/>
-                            <Setter TargetName="bd" Property="Padding" Value="8,10"/>
                         </DataTrigger>
 						<Trigger Property="IsMouseOver" Value="True">
 							<Setter TargetName="bd" Property="Background">

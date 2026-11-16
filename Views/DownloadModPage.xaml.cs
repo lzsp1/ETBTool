@@ -35,8 +35,18 @@ namespace ETBTool.Views
 
             _searchTimer.Tick += (_, _) => { _searchTimer.Stop(); try { _vm.SearchCmd.Execute(null); } catch { } };
 
-            Loaded += async (_, _) => { await _vm.InitAsync(); SearchBox?.Focus(); };
+            Loaded += async (_, _) => { UpdateColumns(); await _vm.InitAsync(); SearchBox?.Focus(); };
+            SizeChanged += (_, _) => UpdateColumns();
             RefreshText();
+        }
+
+        /// <summary>按当前宽度调整列数，让卡片撑满整行，避免右侧留白。</summary>
+        private void UpdateColumns()
+        {
+            var width = ActualWidth - 64;
+            if (width <= 0) return;
+            var columns = (int)(width / 300.0);
+            _vm.ModColumns = Math.Max(2, Math.Min(6, columns));
         }
 
         private void OnVmChanged(object? s, PropertyChangedEventArgs e)

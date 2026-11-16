@@ -121,6 +121,8 @@ namespace ETBTool.ViewModels
         public bool CanPrev => CurrentPage > 1;
         public bool CanNext => CurrentPage < TotalPages;
         public ObservableCollection<ModItem> Mods { get => _mods; set => Set(ref _mods, value); }
+        private int _modColumns = 4;
+        public int ModColumns { get => _modColumns; set => Set(ref _modColumns, value); }
         public ObservableCollection<DownloadTask> Downloads { get => _dl; set => Set(ref _dl, value); }
         public bool HasDownloads => Downloads.Count > 0;
 
